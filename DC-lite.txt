@@ -1,622 +1,748 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Discord Lite+ Unified</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #2c2f33;
-            color: white;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #sidebar {
-            width: 260px;
-            background: #23272a;
-            padding: 15px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        h2 {
-            margin: 0 0 8px 0;
-            font-size: 18px;
-        }
-        #channels, #friends {
-            background: #2c2f33;
-            padding: 10px;
-            border-radius: 6px;
-            max-height: 40vh;
-            overflow-y: auto;
-        }
-        .section-title {
-            font-size: 14px;
-            opacity: 0.8;
-            margin-bottom: 6px;
-        }
-        .channel, .friend {
-            padding: 8px;
-            background: #2c2f33;
-            margin-bottom: 6px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .channel:hover, .friend:hover {
-            background: #3a3d41;
-        }
-        .active-item {
-            background: #3b4a7a !important;
-        }
-        #addFriendArea {
-            margin-top: 8px;
-            display: flex;
-            gap: 5px;
-        }
-        #addFriendArea input {
-            flex: 1;
-            padding: 6px;
-            border-radius: 4px;
-            border: none;
-            font-size: 13px;
-        }
-        #addFriendArea button {
-            padding: 6px 8px;
-            border: none;
-            background: #7289da;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        #chat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #2c2f33;
-        }
-        #chatHeader {
-            padding: 10px 15px;
-            background: #23272a;
-            border-bottom: 1px solid #1e2124;
-            font-size: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        #chatTitle {
-            flex: 1;
-        }
-        #deleteDmBtn {
-            display: none;
-            padding: 4px 8px;
-            font-size: 11px;
-            border-radius: 4px;
-            border: none;
-            background: #d9534f;
-            color: white;
-            cursor: pointer;
-        }
-        #messages {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            font-size: 14px;
-        }
-        .message {
-            margin-bottom: 6px;
-        }
-        .message-user {
-            font-weight: bold;
-            margin-right: 4px;
-        }
-        #typingIndicator {
-            font-size: 12px;
-            opacity: 0.7;
-            padding-left: 15px;
-            height: 18px;
-        }
-        #inputArea {
-            padding: 10px;
-            background: #23272a;
-            display: flex;
-            gap: 10px;
-        }
-        #inputArea input {
-            flex: 1;
-            padding: 10px;
-            border-radius: 5px;
-            border: none;
-            font-size: 14px;
-        }
-        #inputArea button {
-            padding: 10px 15px;
-            border: none;
-            background: #7289da;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        #loginModal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-        #loginBox {
-            background: #23272a;
-            padding: 20px;
-            border-radius: 8px;
-            width: 320px;
-            text-align: center;
-        }
-        #loginBox input {
-            width: 90%;
-            padding: 10px;
-            margin-top: 8px;
-            border-radius: 5px;
-            border: none;
-        }
-        #loginBox button {
-            margin-top: 10px;
-            padding: 10px 15px;
-            background: #7289da;
-            border: none;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #loginError {
-            margin-top: 6px;
-            font-size: 12px;
-            color: #ff6b6b;
-            min-height: 16px;
-        }
-        #watermark {
-            position: fixed;
-            bottom: 6px;
-            right: 8px;
-            font-size: 11px;
-            opacity: 0.5;
-            pointer-events: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Discord Lite+</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-color: #202225;
+      color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 260px;
+      background-color: #2b2d31;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #sidebar-inner {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+      gap: 10px;
+    }
+
+    .sidebar-section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #b9bbbe;
+      margin-bottom: 4px;
+    }
+
+    .channel,
+    .friend {
+      padding: 4px 6px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #dcddde;
+    }
+
+    .channel:hover,
+    .friend:hover {
+      background-color: #3a3c43;
+    }
+
+    #friends-list {
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    #add-friend-row {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    #add-friend-input {
+      flex: 1;
+      padding: 4px;
+      border-radius: 3px;
+      border: none;
+      outline: none;
+      background-color: #202225;
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    #add-friend-button {
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: none;
+      background-color: #5865f2;
+      color: #ffffff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    #add-friend-button:hover {
+      background-color: #4752c4;
+    }
+
+    /* User bar bottom-left */
+    #user-bar {
+      padding: 6px 8px;
+      background-color: #232428;
+      border-top: 1px solid #1e1f22;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #user-pfp {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background-color: #3a3c43;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    #user-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #settings-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #b9bbbe;
+      flex-shrink: 0;
+    }
+
+    #settings-icon:hover {
+      background-color: #3a3c43;
+      color: #ffffff;
+    }
+
+    /* Main area */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #313338;
+    }
+
+    #header {
+      height: 40px;
+      border-bottom: 1px solid #202225;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    #messages {
+      flex: 1;
+      padding: 8px 10px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    .message-row {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 4px;
+      gap: 6px;
+    }
+
+    .message-pfp {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #3a3c43;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .message-content {
+      display: inline-block;
+    }
+
+    .message-username {
+      font-weight: 600;
+      margin-right: 4px;
+      color: #ffffff;
+    }
+
+    .message-text {
+      color: #dcddde;
+    }
+
+    #input-bar {
+      border-top: 1px solid #202225;
+      padding: 8px 10px;
+      display: flex;
+      gap: 6px;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 6px;
+      border-radius: 3px;
+      border: none;
+      outline: none;
+      background-color: #383a40;
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    #send-button {
+      padding: 6px 12px;
+      border-radius: 3px;
+      border: none;
+      background-color: #5865f2;
+      color: #ffffff;
+      font-size: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    #send-button:hover {
+      background-color: #4752c4;
+    }
+
+    /* Login overlay */
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+    }
+
+    #login-box {
+      width: 280px;
+      background-color: #2b2d31;
+      border-radius: 6px;
+      padding: 16px;
+      box-shadow: 0 0 0 1px #202225;
+    }
+
+    #login-box h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .login-field {
+      margin-bottom: 8px;
+    }
+
+    .login-field label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 2px;
+      color: #b9bbbe;
+    }
+
+    .login-field input {
+      width: 100%;
+      padding: 6px;
+      border-radius: 3px;
+      border: none;
+      outline: none;
+      background-color: #202225;
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    #login-button {
+      width: 100%;
+      padding: 7px;
+      border-radius: 3px;
+      border: none;
+      background-color: #5865f2;
+      color: #ffffff;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    #login-button:hover {
+      background-color: #4752c4;
+    }
+
+    /* Settings modal */
+    #settings-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    #settings-modal {
+      width: 360px;
+      max-width: 90%;
+      background-color: #2b2d31;
+      border-radius: 8px;
+      padding: 14px 16px 16px;
+      box-shadow: 0 0 0 1px #202225;
+    }
+
+    #settings-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    #settings-modal-header h2 {
+      font-size: 16px;
+    }
+
+    #settings-close {
+      cursor: pointer;
+      font-size: 18px;
+      color: #b9bbbe;
+    }
+
+    #settings-close:hover {
+      color: #ffffff;
+    }
+
+    .settings-section {
+      margin-bottom: 10px;
+    }
+
+    .settings-section label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 3px;
+      color: #b9bbbe;
+    }
+
+    .settings-section input[type="file"],
+    .settings-section input[type="color"],
+    .settings-section select {
+      width: 100%;
+      padding: 5px;
+      border-radius: 3px;
+      border: none;
+      background-color: #202225;
+      color: #ffffff;
+      font-size: 12px;
+    }
+
+    #settings-save {
+      width: 100%;
+      padding: 7px;
+      border-radius: 3px;
+      border: none;
+      background-color: #5865f2;
+      color: #ffffff;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    #settings-save:hover {
+      background-color: #4752c4;
+    }
+
+    /* Watermark */
+    #watermark {
+      position: fixed;
+      right: 8px;
+      bottom: 4px;
+      font-size: 11px;
+      color: #b9bbbe;
+      z-index: 10;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #2b2d31;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #202225;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #18191c;
+    }
+  </style>
 </head>
 <body>
-
-<div id="loginModal">
-    <div id="loginBox">
-        <h2>Sign in</h2>
-        <input id="loginUsername" placeholder="Username">
-        <input id="loginPassword" type="password" placeholder="Password">
-        <button id="loginBtn">Login / Register</button>
-        <div id="loginError"></div>
-    </div>
-</div>
-
-<div id="sidebar">
-    <div>
-        <h2>Discord Lite+</h2>
-    </div>
-
-    <div>
-        <div class="section-title">Channels</div>
-        <div id="channels">
-            <div class="channel active-item" data-channel="general"># general</div>
-            <div class="channel" data-channel="gaming"># gaming</div>
-            <div class="channel" data-channel="random"># random</div>
+  <div id="app">
+    <div id="sidebar">
+      <div id="sidebar-inner">
+        <div>
+          <div class="sidebar-section-title">Channels</div>
+          <div class="channel" data-channel="general">#general</div>
+          <div class="channel" data-channel="gaming">#gaming</div>
+          <div class="channel" data-channel="random">#random</div>
         </div>
-    </div>
 
-    <div>
-        <div class="section-title">Friends / DMs</div>
-        <div id="friends"></div>
-        <div id="addFriendArea">
-            <input id="friendInput" placeholder="Add friend by name">
-            <button id="addFriendBtn">Add</button>
+        <div>
+          <div class="sidebar-section-title" style="margin-top:8px;">Friends / DMs</div>
+          <div id="friends-list">
+            <!-- friends will be listed here -->
+          </div>
+          <div id="add-friend-row">
+            <input id="add-friend-input" placeholder="Add friend by name">
+            <button id="add-friend-button">Add</button>
+          </div>
         </div>
+      </div>
+
+      <div id="user-bar">
+        <img id="user-pfp" src="" alt="PFP">
+        <div id="user-name">User</div>
+        <div id="settings-icon" title="Settings">⚙</div>
+      </div>
     </div>
-</div>
 
-<div id="chat">
-    <div id="chatHeader">
-        <div id="chatTitle"># general</div>
-        <button id="deleteDmBtn">Delete DM</button>
+    <div id="main">
+      <div id="header">#general</div>
+      <div id="messages"></div>
+      <div id="input-bar">
+        <input id="message-input" type="text" placeholder="Type a message...">
+        <button id="send-button">Send</button>
+      </div>
     </div>
-    <div id="messages"></div>
-    <div id="typingIndicator"></div>
-    <div id="inputArea">
-        <input id="messageInput" placeholder="Type a message...">
-        <button id="sendBtn">Send</button>
+  </div>
+
+  <!-- Login overlay -->
+  <div id="login-overlay">
+    <div id="login-box">
+      <h2>Sign in</h2>
+      <div class="login-field">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text">
+      </div>
+      <div class="login-field">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password">
+      </div>
+      <button id="login-button">Login / Register</button>
     </div>
-</div>
+  </div>
 
-<div id="watermark">made by Toby Ullott</div>
+  <!-- Settings modal -->
+  <div id="settings-overlay">
+    <div id="settings-modal">
+      <div id="settings-modal-header">
+        <h2>User Settings</h2>
+        <div id="settings-close">&times;</div>
+      </div>
 
-<!-- Firebase SDK (for PC / normal browsers). On iPad Files app this may fail, and we fall back. -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+      <div class="settings-section">
+        <label for="pfp-input">Profile picture</label>
+        <input type="file" id="pfp-input" accept="image/*">
+      </div>
 
-<script>
-    // Your Firebase config
+      <div class="settings-section">
+        <label for="bg-picker">Background colour</label>
+        <input type="color" id="bg-picker">
+      </div>
+
+      <div class="settings-section">
+        <label for="dm-pref">DM preferences</label>
+        <select id="dm-pref">
+          <option value="on">DMs On</option>
+          <option value="request">DM Requests Only</option>
+          <option value="off">DMs Off</option>
+        </select>
+      </div>
+
+      <button id="settings-save">Save</button>
+    </div>
+  </div>
+
+  <div id="watermark">made by Toby Ulliott</div>
+
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    // Firebase config (v8)
     const firebaseConfig = {
-        apiKey: "AIzaSyAcHjp8HQfqNTeaNJB-SHYFIIsvtw6VUn0",
-        authDomain: "discord-lite-98386.firebaseapp.com",
-        databaseURL: "https://discord-lite-98386-default-rtdb.firebaseio.com",
-        projectId: "discord-lite-98386",
-        storageBucket: "discord-lite-98386.firebasestorage.app",
-        messagingSenderId: "247147523999",
-        appId: "1:247147523999:web:51ebcf1d1575f80ee257aa",
-        measurementId: "G-YZ5VD42XVV"
+      apiKey: "AIzaSyAcHjp8HQfqNTeaNJB-SHYFIIsvtw6VUn0",
+      authDomain: "discord-lite-98386.firebaseapp.com",
+      databaseURL: "https://discord-lite-98386-default-rtdb.firebaseio.com",
+      projectId: "discord-lite-98386",
+      storageBucket: "discord-lite-98386.firebasestorage.app",
+      messagingSenderId: "247147523999",
+      appId: "1:247147523999:web:51ebcf1d1575f80ee257aa",
+      measurementId: "G-YZ5VD42XVV"
     };
 
-    const dbBase = firebaseConfig.databaseURL;
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    let sdkMode = false;          // true = Firebase SDK, false = REST fallback
-    let db = null;                // firebase.database() when in SDK mode
-    let username = "";
-    let currentMode = "channel";  // "channel" or "dm"
-    let currentTarget = "general";
-    let currentMessagesRef = null;
-    let currentTypingRef = null;
-    let pollInterval = null;
+    let currentUser = null;
+    let currentPfp = null;
+    let currentChannel = "general";
 
-    const messagesDiv = document.getElementById("messages");
-    const typingIndicatorDiv = document.getElementById("typingIndicator");
-    const chatTitle = document.getElementById("chatTitle");
-    const deleteDmBtn = document.getElementById("deleteDmBtn");
-
-    // Try to enable SDK mode if Firebase loaded
-    try {
-        if (window.firebase && firebase.initializeApp) {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-            sdkMode = true;
-        }
-    } catch (e) {
-        sdkMode = false;
+    function defaultPfpDataUrl(letter) {
+      const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">' +
+        '<rect width="64" height="64" fill="#3a3c43"/>' +
+        '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#b9bbbe" font-size="26" font-family="Arial">' +
+        letter +
+        "</text></svg>";
+      return "data:image/svg+xml;base64," + btoa(svg);
     }
 
-    // REST helpers (for iPad / fallback)
-    async function restGet(path) {
-        const res = await fetch(dbBase + "/" + path + ".json");
-        return res.ok ? res.json() : null;
-    }
-    async function restPut(path, value) {
-        await fetch(dbBase + "/" + path + ".json", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(value)
-        });
-    }
-    async function restPatch(path, value) {
-        await fetch(dbBase + "/" + path + ".json", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(value)
-        });
-    }
-    async function restPost(path, value) {
-        await fetch(dbBase + "/" + path + ".json", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(value)
-        });
-    }
-    async function restDelete(path) {
-        await fetch(dbBase + "/" + path + ".json", { method: "DELETE" });
-    }
+    function applyUserToUI() {
+      const nameEl = document.getElementById("user-name");
+      if (nameEl && currentUser) nameEl.textContent = currentUser;
 
-    // Conversation helpers
-    function getConversationId(a, b) {
-        return [a, b].sort().join("_");
-    }
-    function getMessagesPath() {
-        if (currentMode === "channel") {
-            return "channels/" + currentTarget;
+      const pfpEl = document.getElementById("user-pfp");
+      if (pfpEl) {
+        if (currentPfp) {
+          pfpEl.src = currentPfp;
         } else {
-            const convId = getConversationId(username, currentTarget);
-            return "dms/" + convId;
+          const letter = currentUser ? currentUser.charAt(0).toUpperCase() : "U";
+          pfpEl.src = defaultPfpDataUrl(letter);
         }
-    }
-    function getTypingPath() {
-        if (currentMode === "channel") {
-            return "typing/channels/" + currentTarget;
-        } else {
-            const convId = getConversationId(username, currentTarget);
-            return "typing/dms/" + convId;
-        }
+      }
     }
 
-    // Login / register
-    document.getElementById("loginBtn").addEventListener("click", async function () {
-        const u = document.getElementById("loginUsername").value.trim();
-        const p = document.getElementById("loginPassword").value;
-        const err = document.getElementById("loginError");
-        err.textContent = "";
+    function appendMessage(msg) {
+      const messagesDiv = document.getElementById("messages");
 
-        if (!u || !p) {
-            err.textContent = "Enter username and password.";
-            return;
-        }
+      const row = document.createElement("div");
+      row.className = "message-row";
 
-        try {
-            let userData;
-            if (sdkMode) {
-                const snap = await db.ref("users/" + u).once("value");
-                userData = snap.val();
-            } else {
-                userData = await restGet("users/" + u);
-            }
+      const pfpImg = document.createElement("img");
+      pfpImg.className = "message-pfp";
+      if (msg.pfp) {
+        pfpImg.src = msg.pfp;
+      } else {
+        const letter = msg.user ? msg.user.charAt(0).toUpperCase() : "U";
+        pfpImg.src = defaultPfpDataUrl(letter);
+      }
 
-            if (!userData) {
-                // Register
-                const newUser = { password: p };
-                if (sdkMode) {
-                    await db.ref("users/" + u).set(newUser);
-                } else {
-                    await restPut("users/" + u, newUser);
-                }
-            } else {
-                if (userData.password !== p) {
-                    err.textContent = "Wrong password.";
-                    return;
-                }
-            }
+      const content = document.createElement("div");
+      content.className = "message-content";
 
-            username = u;
-            document.getElementById("loginModal").style.display = "none";
-            initAppAfterLogin();
-        } catch (e) {
-            err.textContent = "Login error.";
-        }
-    });
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "message-username";
+      nameSpan.textContent = msg.user || "User";
 
-    function initAppAfterLogin() {
-        setupChannels();
-        setupFriends();
-        switchToChannel("general");
+      const textSpan = document.createElement("span");
+      textSpan.className = "message-text";
+      textSpan.textContent = msg.text || "";
+
+      content.appendChild(nameSpan);
+      content.appendChild(textSpan);
+
+      row.appendChild(pfpImg);
+      row.appendChild(content);
+
+      messagesDiv.appendChild(row);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
-    // Channels
-    function setupChannels() {
-        const channelEls = document.querySelectorAll(".channel");
-        channelEls.forEach(ch => {
-            ch.addEventListener("click", () => {
-                const channel = ch.getAttribute("data-channel");
-                switchToChannel(channel);
-            });
-        });
-    }
+    function loadMessagesForChannel(channel) {
+      const messagesDiv = document.getElementById("messages");
+      messagesDiv.innerHTML = "";
 
-    function clearActiveSidebar() {
-        const all = document.querySelectorAll(".channel, .friend");
-        all.forEach(el => el.classList.remove("active-item"));
-    }
+      db.ref("messages/" + channel).off(); // remove old listener
 
-    function switchToChannel(channelName) {
-        currentMode = "channel";
-        currentTarget = channelName;
-        chatTitle.textContent = "# " + channelName;
-        deleteDmBtn.style.display = "none";
-        clearActiveSidebar();
-        document.querySelectorAll(".channel").forEach(ch => {
-            if (ch.getAttribute("data-channel") === channelName) {
-                ch.classList.add("active-item");
-            }
-        });
-        attachListeners();
-    }
-
-    // Friends / DMs
-    document.getElementById("addFriendBtn").addEventListener("click", async function () {
-        const friendName = document.getElementById("friendInput").value.trim();
-        if (!friendName || !username || friendName === username) return;
-
-        if (sdkMode) {
-            await db.ref("friends/" + username + "/" + friendName).set(true);
-            await db.ref("friends/" + friendName + "/" + username).set(true);
-        } else {
-            await restPut("friends/" + username + "/" + friendName, true);
-            await restPut("friends/" + friendName + "/" + username, true);
-        }
-
-        document.getElementById("friendInput").value = "";
-    });
-
-    function setupFriends() {
-        if (!username) return;
-
-        if (sdkMode) {
-            const friendsRef = db.ref("friends/" + username);
-            friendsRef.on("value", snapshot => {
-                const data = snapshot.val() || {};
-                renderFriends(data);
-            });
-        } else {
-            // REST: poll friends list
-            setInterval(async () => {
-                if (!username) return;
-                const data = await restGet("friends/" + username) || {};
-                renderFriends(data);
-            }, 2000);
-        }
-    }
-
-    function renderFriends(data) {
-        const friendsDiv = document.getElementById("friends");
-        friendsDiv.innerHTML = "";
-        Object.keys(data).forEach(friendName => {
-            const div = document.createElement("div");
-            div.className = "friend";
-            div.textContent = friendName;
-            div.setAttribute("data-friend", friendName);
-            div.addEventListener("click", () => {
-                switchToDM(friendName);
-            });
-            friendsDiv.appendChild(div);
-        });
-    }
-
-    function switchToDM(friendName) {
-        currentMode = "dm";
-        currentTarget = friendName;
-        chatTitle.textContent = "DM with " + friendName;
-        deleteDmBtn.style.display = "inline-block";
-        clearActiveSidebar();
-        document.querySelectorAll(".friend").forEach(f => {
-            if (f.getAttribute("data-friend") === friendName) {
-                f.classList.add("active-item");
-            }
-        });
-        attachListeners();
-    }
-
-    // Delete DM
-    deleteDmBtn.addEventListener("click", async function () {
-        if (currentMode !== "dm" || !currentTarget) return;
-        const convId = getConversationId(username, currentTarget);
-        if (sdkMode) {
-            await db.ref("dms/" + convId).remove();
-        } else {
-            await restDelete("dms/" + convId);
-        }
+      db.ref("messages/" + channel).on("value", (snapshot) => {
+        const data = snapshot.val();
         messagesDiv.innerHTML = "";
-    });
+        if (!data) return;
 
-    // Attach / detach listeners
-    function detachListeners() {
-        if (sdkMode) {
-            if (currentMessagesRef) currentMessagesRef.off();
-            if (currentTypingRef) currentTypingRef.off();
-        }
-        if (pollInterval) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-        }
+        const list = Object.values(data);
+        list.forEach((msg) => appendMessage(msg));
+      });
     }
 
-    function attachListeners() {
-        if (!username) return;
+    function sendMessage() {
+      const input = document.getElementById("message-input");
+      const text = input.value.trim();
+      if (!text || !currentUser) return;
 
-        detachListeners();
-        messagesDiv.innerHTML = "";
-        typingIndicatorDiv.textContent = "";
+      const msgObj = {
+        user: currentUser,
+        text: text,
+        pfp: currentPfp || null,
+        ts: Date.now()
+      };
 
-        const msgPath = getMessagesPath();
-        const typingPath = getTypingPath();
-
-        if (sdkMode) {
-            currentMessagesRef = db.ref(msgPath);
-            currentTypingRef = db.ref(typingPath);
-
-            currentMessagesRef.on("child_added", snapshot => {
-                const data = snapshot.val();
-                if (!data) return;
-                addMessageToUI(data.user, data.text);
-            });
-
-            currentTypingRef.on("value", snapshot => {
-                const data = snapshot.val();
-                if (!data) {
-                    typingIndicatorDiv.textContent = "";
-                    return;
-                }
-                const typingUsers = [];
-                Object.keys(data).forEach(u => {
-                    if (data[u] === true && u !== username) typingUsers.push(u);
-                });
-                typingIndicatorDiv.textContent = typingUsers.length
-                    ? typingUsers.join(", ") + " is typing..."
-                    : "";
-            });
-        } else {
-            // REST polling mode (iPad)
-            let lastSnapshot = null;
-            pollInterval = setInterval(async () => {
-                const data = await restGet(msgPath) || {};
-                // Simple re-render each poll
-                if (JSON.stringify(data) !== JSON.stringify(lastSnapshot)) {
-                    lastSnapshot = data;
-                    messagesDiv.innerHTML = "";
-                    Object.keys(data).sort().forEach(key => {
-                        const msg = data[key];
-                        addMessageToUI(msg.user, msg.text);
-                    });
-                }
-            }, 1500);
-        }
+      db.ref("messages/" + currentChannel).push(msgObj);
+      input.value = "";
     }
 
-    // UI message helper (auto-scroll)
-    function addMessageToUI(user, text) {
+    function openSettings() {
+      document.getElementById("settings-overlay").style.display = "flex";
+    }
+
+    function closeSettings() {
+      document.getElementById("settings-overlay").style.display = "none";
+    }
+
+    function applySettingsFromStorage() {
+      const bgColor = localStorage.getItem("dl_bgColor");
+      const dmPref = localStorage.getItem("dl_dmPref");
+      const pfp = localStorage.getItem("dl_pfp");
+
+      if (bgColor) {
+        document.body.style.backgroundColor = bgColor;
+        const picker = document.getElementById("bg-picker");
+        if (picker) picker.value = bgColor;
+      }
+
+      if (dmPref) {
+        const sel = document.getElementById("dm-pref");
+        if (sel) sel.value = dmPref;
+      }
+
+      currentPfp = pfp || null;
+      applyUserToUI();
+    }
+
+    function saveSettings() {
+      const bgPicker = document.getElementById("bg-picker");
+      const dmPrefSel = document.getElementById("dm-pref");
+      const pfpInput = document.getElementById("pfp-input");
+
+      if (bgPicker && bgPicker.value) {
+        localStorage.setItem("dl_bgColor", bgPicker.value);
+      }
+
+      if (dmPrefSel && dmPrefSel.value) {
+        localStorage.setItem("dl_dmPref", dmPrefSel.value);
+      }
+
+      const file = pfpInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          localStorage.setItem("dl_pfp", e.target.result);
+          currentPfp = e.target.result;
+          applySettingsFromStorage();
+          closeSettings();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        applySettingsFromStorage();
+        closeSettings();
+      }
+    }
+
+    function handleLogin() {
+      const uInput = document.getElementById("login-username");
+      const pInput = document.getElementById("login-password");
+      const name = (uInput.value || "").trim();
+      const pass = (pInput.value || "").trim();
+
+      if (!name) return;
+
+      currentUser = name;
+      localStorage.setItem("dl_username", currentUser);
+      localStorage.setItem("dl_password", pass);
+
+      document.getElementById("login-overlay").style.display = "none";
+      applyUserToUI();
+      loadMessagesForChannel(currentChannel);
+    }
+
+    // ALWAYS show login on startup
+    function initUserFromStorage() {
+      document.getElementById("login-overlay").style.display = "flex";
+
+      // clear any old auto-login data so it never skips
+      localStorage.removeItem("dl_username");
+      localStorage.removeItem("dl_password");
+
+      applyUserToUI();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Init user + settings
+      initUserFromStorage();
+      applySettingsFromStorage();
+
+      // Channels
+      document.querySelectorAll(".channel").forEach((el) => {
+        el.addEventListener("click", () => {
+          currentChannel = el.getAttribute("data-channel") || "general";
+          document.getElementById("header").textContent = "#" + currentChannel;
+          loadMessagesForChannel(currentChannel);
+        });
+      });
+
+      // Initial messages load (will show once logged in)
+      loadMessagesForChannel(currentChannel);
+
+      // Send message
+      document.getElementById("send-button").addEventListener("click", sendMessage);
+      document.getElementById("message-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
+
+      // Login
+      document.getElementById("login-button").addEventListener("click", handleLogin);
+      document.getElementById("login-username").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleLogin();
+      });
+      document.getElementById("login-password").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleLogin();
+      });
+
+      // Settings
+      document.getElementById("settings-icon").addEventListener("click", openSettings);
+      document.getElementById("settings-close").addEventListener("click", closeSettings);
+      document.getElementById("settings-overlay").addEventListener("click", (e) => {
+        if (e.target.id === "settings-overlay") closeSettings();
+      });
+      document.getElementById("settings-save").addEventListener("click", saveSettings);
+
+      // Add friend (simple local list)
+      document.getElementById("add-friend-button").addEventListener("click", () => {
+        const input = document.getElementById("add-friend-input");
+        const name = (input.value || "").trim();
+        if (!name) return;
+        const list = document.getElementById("friends-list");
         const div = document.createElement("div");
-        div.className = "message";
-
-        const userSpan = document.createElement("span");
-        userSpan.className = "message-user";
-        userSpan.textContent = user;
-
-        const textSpan = document.createElement("span");
-        textSpan.textContent = ": " + text;
-
-        div.appendChild(userSpan);
-        div.appendChild(textSpan);
-
-        messagesDiv.appendChild(div);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    // Sending messages
-    document.getElementById("sendBtn").addEventListener("click", sendMessage);
-    document.getElementById("messageInput").addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-            sendMessage();
-        } else {
-            if (sdkMode) sendTyping();
-        }
-    });
-
-    async function sendMessage() {
-        if (!username) return;
-        const input = document.getElementById("messageInput");
-        const text = input.value.trim();
-        if (!text) return;
-
-        const msgPath = getMessagesPath();
-        const msg = { user: username, text: text };
-
-        if (sdkMode) {
-            await db.ref(msgPath).push(msg);
-            const typingPath = getTypingPath();
-            db.ref(typingPath + "/" + username).set(false);
-        } else {
-            await restPost(msgPath, msg);
-        }
-
+        div.className = "friend";
+        div.textContent = name;
+        list.appendChild(div);
         input.value = "";
-    }
-
-    // Typing indicator (SDK mode only)
-    let typingTimeout = null;
-    function sendTyping() {
-        if (!username) return;
-        const typingPath = getTypingPath();
-        db.ref(typingPath + "/" + username).set(true);
-        if (typingTimeout) clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-            db.ref(typingPath + "/" + username).set(false);
-        }, 1500);
-    }
-</script>
-
+      });
+    });
+  </script>
 </body>
 </html>
