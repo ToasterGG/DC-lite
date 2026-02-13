@@ -11,6 +11,10 @@
       font-family: Arial, sans-serif;
     }
 
+body, #main, #sidebar, #sidebar-inner, #messages, #header, #input-bar {
+  color: #ffffff !important;
+}
+
     body {
       background-color: #202225;
       color: #ffffff;
@@ -59,6 +63,11 @@
     .channel:hover,
     .friend:hover {
       background-color: #3a3c43;
+    }
+
+    .active-channel,
+    .active-friend {
+      background-color: #404249;
     }
 
     #friends-list {
@@ -170,7 +179,7 @@
     .message-row {
       display: flex;
       align-items: flex-start;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       gap: 6px;
     }
 
@@ -185,6 +194,7 @@
 
     .message-content {
       display: inline-block;
+      max-width: 80%;
     }
 
     .message-username {
@@ -195,39 +205,137 @@
 
     .message-text {
       color: #dcddde;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
 
-    #input-bar {
-      border-top: 1px solid #202225;
-      padding: 8px 10px;
-      display: flex;
-      gap: 6px;
+    /* Media in messages */
+    .message-image {
+      margin-top: 3px;
+      max-width: 100%;
+      border-radius: 6px;
+      cursor: pointer;
+      display: block;
     }
 
-    #message-input {
-      flex: 1;
-      padding: 6px;
-      border-radius: 3px;
-      border: none;
-      outline: none;
-      background-color: #383a40;
-      color: #ffffff;
-      font-size: 14px;
+    .message-file-card {
+      margin-top: 4px;
+      background-color: #2b2d31;
+      border-radius: 6px;
+      padding: 6px 8px;
+      border: 1px solid #202225;
+      display: inline-block;
+      min-width: 200px;
     }
 
-    #send-button {
-      padding: 6px 12px;
+    .message-file-name {
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .message-file-size {
+      font-size: 11px;
+      color: #b9bbbe;
+      margin-bottom: 4px;
+    }
+
+    .message-file-download {
+      padding: 4px 8px;
       border-radius: 3px;
       border: none;
       background-color: #5865f2;
       color: #ffffff;
-      font-size: 13px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .message-file-download:hover {
+      background-color: #4752c4;
+    }
+
+    .message-video-thumb-wrapper {
+      margin-top: 4px;
+      display: inline-block;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .message-video-thumb {
+      width: 160px;
+      height: 90px;
+      border-radius: 6px;
+      background-color: #000;
+      object-fit: cover;
+      display: block;
+    }
+
+    .message-video-play {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 26px;
+      text-shadow: 0 0 6px rgba(0,0,0,0.8);
+    }
+
+    #input-bar {
+      border-top: 1px solid #202225;
+      padding: 10px 10px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 4px;
+      border: none;
+      outline: none;
+      background-color: #383a40;
+      color: #ffffff;
+      font-size: 15px;
+    }
+
+    #upload-button {
+      width: 34px;
+      height: 34px;
+      border-radius: 4px;
+      border: none;
+      background-color: #5865f2;
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    #upload-button:hover {
+      background-color: #4752c4;
+    }
+
+    #send-button {
+      padding: 8px 14px;
+      border-radius: 4px;
+      border: none;
+      background-color: #5865f2;
+      color: #ffffff;
+      font-size: 14px;
       cursor: pointer;
       flex-shrink: 0;
     }
 
     #send-button:hover {
       background-color: #4752c4;
+    }
+
+    /* Hidden file input */
+    #file-input {
+      display: none;
     }
 
     /* Login overlay */
@@ -302,6 +410,7 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      backdrop-filter: blur(4px);
     }
 
     #settings-modal {
@@ -373,6 +482,70 @@
       background-color: #4752c4;
     }
 
+    /* Video modal (blurred background) */
+    #video-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+      backdrop-filter: blur(6px);
+    }
+
+    #video-modal {
+      max-width: 80%;
+      max-height: 80%;
+      background-color: #000;
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: 0 0 0 1px #202225;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #video-modal video {
+      max-width: 100%;
+      max-height: 70vh;
+      border-radius: 4px;
+      background-color: #000;
+    }
+
+    #video-modal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    #video-modal-close {
+      cursor: pointer;
+      font-size: 18px;
+      color: #b9bbbe;
+    }
+
+    #video-modal-close:hover {
+      color: #ffffff;
+    }
+
+    #video-modal-download {
+      align-self: flex-end;
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: none;
+      background-color: #5865f2;
+      color: #ffffff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    #video-modal-download:hover {
+      background-color: #4752c4;
+    }
+
     /* Watermark */
     #watermark {
       position: fixed;
@@ -405,16 +578,14 @@
       <div id="sidebar-inner">
         <div>
           <div class="sidebar-section-title">Channels</div>
-          <div class="channel" data-channel="general">#general</div>
+          <div class="channel active-channel" data-channel="general">#general</div>
           <div class="channel" data-channel="gaming">#gaming</div>
           <div class="channel" data-channel="random">#random</div>
         </div>
 
         <div>
           <div class="sidebar-section-title" style="margin-top:8px;">Friends / DMs</div>
-          <div id="friends-list">
-            <!-- friends will be listed here -->
-          </div>
+          <div id="friends-list"></div>
           <div id="add-friend-row">
             <input id="add-friend-input" placeholder="Add friend by name">
             <button id="add-friend-button">Add</button>
@@ -434,12 +605,14 @@
       <div id="messages"></div>
       <div id="input-bar">
         <input id="message-input" type="text" placeholder="Type a message...">
+        <button id="upload-button" title="Upload file">📎</button>
         <button id="send-button">Send</button>
       </div>
     </div>
   </div>
 
-  <!-- Login overlay -->
+  <input id="file-input" type="file" multiple>
+
   <div id="login-overlay">
     <div id="login-box">
       <h2>Sign in</h2>
@@ -455,7 +628,6 @@
     </div>
   </div>
 
-  <!-- Settings modal -->
   <div id="settings-overlay">
     <div id="settings-modal">
       <div id="settings-modal-header">
@@ -486,6 +658,18 @@
     </div>
   </div>
 
+    <!-- Video modal -->
+  <div id="video-modal-overlay">
+    <div id="video-modal">
+      <div id="video-modal-top">
+        <span id="video-modal-filename"></span>
+        <span id="video-modal-close">&times;</span>
+      </div>
+      <video id="video-modal-player" controls></video>
+      <button id="video-modal-download">Download</button>
+    </div>
+  </div>
+
   <div id="watermark">made by Toby Ulliott</div>
 
   <!-- Firebase v8 -->
@@ -493,256 +677,454 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
-    // Firebase config (v8)
-    const firebaseConfig = {
-      apiKey: "AIzaSyAcHjp8HQfqNTeaNJB-SHYFIIsvtw6VUn0",
-      authDomain: "discord-lite-98386.firebaseapp.com",
-      databaseURL: "https://discord-lite-98386-default-rtdb.firebaseio.com",
-      projectId: "discord-lite-98386",
-      storageBucket: "discord-lite-98386.firebasestorage.app",
-      messagingSenderId: "247147523999",
-      appId: "1:247147523999:web:51ebcf1d1575f80ee257aa",
-      measurementId: "G-YZ5VD42XVV"
+/* -------------------------------------------------------
+   FULL JAVASCRIPT — FIXED LOGIN + FIXED BACKGROUND + MEDIA
+-------------------------------------------------------- */
+
+// Firebase Init
+const firebaseConfig = {
+  apiKey: "AIzaSyAcHjp8HQfqNTeaNJB-SHYFIIsvtw6VUn0",
+  authDomain: "discord-lite-98386.firebaseapp.com",
+  databaseURL: "https://discord-lite-98386-default-rtdb.firebaseio.com",
+  projectId: "discord-lite-98386",
+  storageBucket: "discord-lite-98386.firebasestorage.app",
+  messagingSenderId: "247147523999",
+  appId: "1:247147523999:web:51ebcf1d1575f80ee257aa",
+  measurementId: "G-YZ5VD42XVV"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Globals
+let currentUser = null;
+let currentPfp = null;
+let currentChannel = "general";
+let currentVideoData = null;
+let currentVideoFilename = null;
+
+// Default PFP generator
+function defaultPfp(letter) {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+      <rect width="64" height="64" fill="#3a3c43"/>
+      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+        fill="#b9bbbe" font-size="26" font-family="Arial">${letter}</text>
+    </svg>`;
+  return "data:image/svg+xml;base64," + btoa(svg);
+}
+
+// Apply username + PFP to UI
+function applyUserToUI() {
+  document.getElementById("user-name").textContent = currentUser;
+  const pfpEl = document.getElementById("user-pfp");
+  pfpEl.src = currentPfp || defaultPfp(currentUser.charAt(0).toUpperCase());
+}
+
+// LOGIN
+function handleLogin() {
+  const u = document.getElementById("login-username").value.trim();
+  const p = document.getElementById("login-password").value.trim();
+  if (!u) return;
+
+  currentUser = u;
+  localStorage.setItem("dl_username", u);
+  localStorage.setItem("dl_password", p);
+
+  document.getElementById("login-overlay").style.display = "none";
+  applyUserToUI();
+  loadMessages(currentChannel);
+}
+
+function initUser() {
+  document.getElementById("login-overlay").style.display = "flex";
+  localStorage.removeItem("dl_username");
+  localStorage.removeItem("dl_password");
+}
+
+// SETTINGS
+function applySettings() {
+  const bg = localStorage.getItem("dl_bgColor");
+  const dmPref = localStorage.getItem("dl_dmPref");
+  const pfp = localStorage.getItem("dl_pfp");
+
+  if (bg) {
+    document.body.style.backgroundColor = bg;
+    document.getElementById("main").style.backgroundColor = bg;
+    document.getElementById("sidebar").style.backgroundColor = bg;
+    document.getElementById("sidebar-inner").style.backgroundColor = bg;
+    document.getElementById("bg-picker").value = bg;
+  }
+
+  if (dmPref) document.getElementById("dm-pref").value = dmPref;
+
+  if (pfp) currentPfp = pfp;
+  applyUserToUI();
+}
+
+function saveSettings() {
+  const bg = document.getElementById("bg-picker").value;
+  const dmPref = document.getElementById("dm-pref").value;
+  const pfpFile = document.getElementById("pfp-input").files[0];
+
+  localStorage.setItem("dl_bgColor", bg);
+  localStorage.setItem("dl_dmPref", dmPref);
+
+  if (pfpFile) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      localStorage.setItem("dl_pfp", e.target.result);
+      currentPfp = e.target.result;
+      applySettings();
+      closeSettings();
     };
+    reader.readAsDataURL(pfpFile);
+  } else {
+    applySettings();
+    closeSettings();
+  }
+}
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+function openSettings() {
+  document.getElementById("settings-overlay").style.display = "flex";
+}
 
-    let currentUser = null;
-    let currentPfp = null;
-    let currentChannel = "general";
+function closeSettings() {
+  document.getElementById("settings-overlay").style.display = "none";
+}
 
-    function defaultPfpDataUrl(letter) {
-      const svg =
-        '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">' +
-        '<rect width="64" height="64" fill="#3a3c43"/>' +
-        '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#b9bbbe" font-size="26" font-family="Arial">' +
-        letter +
-        "</text></svg>";
-      return "data:image/svg+xml;base64," + btoa(svg);
+// DM SYSTEM
+function dmChannelName(a, b) {
+  const sorted = [a, b].sort();
+  return "dm_" + sorted[0] + "_" + sorted[1];
+}
+
+function openDM(friendName) {
+  const dm = dmChannelName(currentUser, friendName);
+  currentChannel = dm;
+
+  document.getElementById("header").textContent = "@" + friendName;
+
+  document.querySelectorAll(".friend").forEach(f => f.classList.remove("active-friend"));
+  [...document.getElementById("friends-list").children].forEach(el => {
+    if (el.textContent === friendName) el.classList.add("active-friend");
+  });
+
+  document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
+
+  loadMessages(dm);
+}
+
+// MESSAGE RENDERING
+function appendMessage(msg) {
+  const messages = document.getElementById("messages");
+
+  const row = document.createElement("div");
+  row.className = "message-row";
+
+  const pfp = document.createElement("img");
+  pfp.className = "message-pfp";
+  pfp.src = msg.pfp || defaultPfp(msg.user.charAt(0).toUpperCase());
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+
+  const name = document.createElement("span");
+  name.className = "message-username";
+  name.textContent = msg.user + ": ";
+
+  content.appendChild(name);
+
+  if (msg.type === "text") {
+    const t = document.createElement("span");
+    t.className = "message-text";
+    t.textContent = msg.text;
+    content.appendChild(t);
+  }
+
+  if (msg.type === "image") {
+    const img = document.createElement("img");
+    img.className = "message-image";
+    img.src = msg.data;
+    img.onclick = () => openImageModal(msg.data);
+    content.appendChild(img);
+  }
+
+  if (msg.type === "video") {
+    const wrap = document.createElement("div");
+    wrap.className = "message-video-thumb-wrapper";
+
+    const thumb = document.createElement("img");
+    thumb.className = "message-video-thumb";
+    thumb.src = msg.thumbnail;
+
+    const play = document.createElement("div");
+    play.className = "message-video-play";
+    play.textContent = "▶";
+
+    wrap.appendChild(thumb);
+    wrap.appendChild(play);
+
+    wrap.onclick = () => openVideoModal(msg.data, msg.filename);
+
+    content.appendChild(wrap);
+  }
+
+  if (msg.type === "file") {
+    const card = document.createElement("div");
+    card.className = "message-file-card";
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "message-file-name";
+    nameEl.textContent = "📄 " + msg.filename;
+
+    const sizeEl = document.createElement("div");
+    sizeEl.className = "message-file-size";
+    sizeEl.textContent = (msg.size / 1024).toFixed(1) + " KB";
+
+    const btn = document.createElement("button");
+    btn.className = "message-file-download";
+    btn.textContent = "Download";
+    btn.onclick = () => downloadBase64(msg.data, msg.filename);
+
+    card.appendChild(nameEl);
+    card.appendChild(sizeEl);
+    card.appendChild(btn);
+
+    content.appendChild(card);
+  }
+
+  row.appendChild(pfp);
+  row.appendChild(content);
+  messages.appendChild(row);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+// LOAD MESSAGES
+function loadMessages(channel) {
+  const messages = document.getElementById("messages");
+  messages.innerHTML = "";
+
+  db.ref("messages/" + channel).off();
+
+  db.ref("messages/" + channel).on("value", snap => {
+    messages.innerHTML = "";
+    const data = snap.val();
+    if (!data) return;
+
+    Object.values(data).forEach(msg => appendMessage(msg));
+  });
+}
+
+// SEND TEXT
+function sendTextMessage() {
+  const input = document.getElementById("message-input");
+  const text = input.value.trim();
+  if (!text) return;
+
+  const msg = {
+    user: currentUser,
+    pfp: currentPfp || null,
+    type: "text",
+    text: text,
+    ts: Date.now()
+  };
+
+  db.ref("messages/" + currentChannel).push(msg);
+  input.value = "";
+}
+
+// FILE UPLOAD
+document.getElementById("upload-button").onclick = () => {
+  document.getElementById("file-input").click();
+};
+
+document.getElementById("file-input").onchange = async e => {
+  const files = [...e.target.files];
+  for (let file of files) {
+    await handleFileUpload(file);
+  }
+  e.target.value = "";
+};
+
+async function handleFileUpload(file) {
+  const reader = new FileReader();
+
+  reader.onload = async e => {
+    const base64 = e.target.result;
+
+    if (file.type.startsWith("image/")) {
+      sendImage(base64);
+      return;
     }
 
-    function applyUserToUI() {
-      const nameEl = document.getElementById("user-name");
-      if (nameEl && currentUser) nameEl.textContent = currentUser;
-
-      const pfpEl = document.getElementById("user-pfp");
-      if (pfpEl) {
-        if (currentPfp) {
-          pfpEl.src = currentPfp;
-        } else {
-          const letter = currentUser ? currentUser.charAt(0).toUpperCase() : "U";
-          pfpEl.src = defaultPfpDataUrl(letter);
-        }
-      }
+    if (file.type.startsWith("video/")) {
+      const thumb = await generateVideoThumbnail(file);
+      sendVideo(base64, file.name, thumb);
+      return;
     }
 
-    function appendMessage(msg) {
-      const messagesDiv = document.getElementById("messages");
+    sendFile(base64, file.name, file.size);
+  };
 
-      const row = document.createElement("div");
-      row.className = "message-row";
+  reader.readAsDataURL(file);
+}
 
-      const pfpImg = document.createElement("img");
-      pfpImg.className = "message-pfp";
-      if (msg.pfp) {
-        pfpImg.src = msg.pfp;
-      } else {
-        const letter = msg.user ? msg.user.charAt(0).toUpperCase() : "U";
-        pfpImg.src = defaultPfpDataUrl(letter);
-      }
+// SEND MEDIA
+function sendImage(data) {
+  db.ref("messages/" + currentChannel).push({
+    user: currentUser,
+    pfp: currentPfp || null,
+    type: "image",
+    data,
+    ts: Date.now()
+  });
+}
 
-      const content = document.createElement("div");
-      content.className = "message-content";
+function sendVideo(data, filename, thumbnail) {
+  db.ref("messages/" + currentChannel).push({
+    user: currentUser,
+    pfp: currentPfp || null,
+    type: "video",
+    data,
+    filename,
+    thumbnail,
+    ts: Date.now()
+  });
+}
 
-      const nameSpan = document.createElement("span");
-      nameSpan.className = "message-username";
-      nameSpan.textContent = msg.user || "User";
+function sendFile(data, filename, size) {
+  db.ref("messages/" + currentChannel).push({
+    user: currentUser,
+    pfp: currentPfp || null,
+    type: "file",
+    data,
+    filename,
+    size,
+    ts: Date.now()
+  });
+}
 
-      const textSpan = document.createElement("span");
-      textSpan.className = "message-text";
-      textSpan.textContent = msg.text || "";
+// VIDEO THUMBNAIL
+function generateVideoThumbnail(file) {
+  return new Promise(resolve => {
+    const video = document.createElement("video");
+    video.src = URL.createObjectURL(file);
+    video.currentTime = 0.1;
 
-      content.appendChild(nameSpan);
-      content.appendChild(textSpan);
+    video.onloadeddata = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 160;
+      canvas.height = 90;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, 160, 90);
+      resolve(canvas.toDataURL("image/jpeg"));
+    };
+  });
+}
 
-      row.appendChild(pfpImg);
-      row.appendChild(content);
+// DOWNLOAD BASE64
+function downloadBase64(data, filename) {
+  const a = document.createElement("a");
+  a.href = data;
+  a.download = filename;
+  a.click();
+}
 
-      messagesDiv.appendChild(row);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
+// VIDEO MODAL
+function openVideoModal(data, filename) {
+  currentVideoData = data;
+  currentVideoFilename = filename;
 
-    function loadMessagesForChannel(channel) {
-      const messagesDiv = document.getElementById("messages");
-      messagesDiv.innerHTML = "";
+  const player = document.getElementById("video-modal-player");
+  player.style.display = "block";
+  player.src = data;
 
-      db.ref("messages/" + channel).off(); // remove old listener
+  document.getElementById("video-modal-filename").textContent = filename;
+  document.getElementById("video-modal-overlay").style.display = "flex";
+}
 
-      db.ref("messages/" + channel).on("value", (snapshot) => {
-        const data = snapshot.val();
-        messagesDiv.innerHTML = "";
-        if (!data) return;
+document.getElementById("video-modal-close").onclick = () => {
+  document.getElementById("video-modal-overlay").style.display = "none";
+  document.getElementById("video-modal-player").pause();
+};
 
-        const list = Object.values(data);
-        list.forEach((msg) => appendMessage(msg));
-      });
-    }
+document.getElementById("video-modal-download").onclick = () => {
+  downloadBase64(currentVideoData, currentVideoFilename);
+};
 
-    function sendMessage() {
-      const input = document.getElementById("message-input");
-      const text = input.value.trim();
-      if (!text || !currentUser) return;
+// IMAGE MODAL (reuses video modal)
+function openImageModal(data) {
+  const player = document.getElementById("video-modal-player");
+  player.style.display = "none";
 
-      const msgObj = {
-        user: currentUser,
-        text: text,
-        pfp: currentPfp || null,
-        ts: Date.now()
-      };
+  document.getElementById("video-modal-filename").textContent = "Image";
+  document.getElementById("video-modal-overlay").style.display = "flex";
 
-      db.ref("messages/" + currentChannel).push(msgObj);
-      input.value = "";
-    }
+  const img = document.createElement("img");
+  img.src = data;
+  img.style.maxWidth = "100%";
+  img.style.maxHeight = "70vh";
+  img.style.borderRadius = "4px";
 
-    function openSettings() {
-      document.getElementById("settings-overlay").style.display = "flex";
-    }
+  const modal = document.getElementById("video-modal");
+  modal.insertBefore(img, document.getElementById("video-modal-download"));
 
-    function closeSettings() {
-      document.getElementById("settings-overlay").style.display = "none";
-    }
+  document.getElementById("video-modal-close").onclick = () => {
+    img.remove();
+    document.getElementById("video-modal-overlay").style.display = "none";
+  };
+}
 
-    function applySettingsFromStorage() {
-      const bgColor = localStorage.getItem("dl_bgColor");
-      const dmPref = localStorage.getItem("dl_dmPref");
-      const pfp = localStorage.getItem("dl_pfp");
+// CHANNEL SWITCHING
+document.querySelectorAll(".channel").forEach(el => {
+  el.onclick = () => {
+    document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
+    document.querySelectorAll(".friend").forEach(f => f.classList.remove("active-friend"));
 
-      if (bgColor) {
-        document.body.style.backgroundColor = bgColor;
-        const picker = document.getElementById("bg-picker");
-        if (picker) picker.value = bgColor;
-      }
+    el.classList.add("active-channel");
 
-      if (dmPref) {
-        const sel = document.getElementById("dm-pref");
-        if (sel) sel.value = dmPref;
-      }
+    currentChannel = el.getAttribute("data-channel");
+    document.getElementById("header").textContent = "#" + currentChannel;
 
-      currentPfp = pfp || null;
-      applyUserToUI();
-    }
+    loadMessages(currentChannel);
+  };
+});
 
-    function saveSettings() {
-      const bgPicker = document.getElementById("bg-picker");
-      const dmPrefSel = document.getElementById("dm-pref");
-      const pfpInput = document.getElementById("pfp-input");
+// FRIENDS / DMs
+document.getElementById("add-friend-button").onclick = () => {
+  const input = document.getElementById("add-friend-input");
+  const name = input.value.trim();
+  if (!name) return;
 
-      if (bgPicker && bgPicker.value) {
-        localStorage.setItem("dl_bgColor", bgPicker.value);
-      }
+  const div = document.createElement("div");
+  div.className = "friend";
+  div.textContent = name;
+  div.onclick = () => openDM(name);
 
-      if (dmPrefSel && dmPrefSel.value) {
-        localStorage.setItem("dl_dmPref", dmPrefSel.value);
-      }
+  document.getElementById("friends-list").appendChild(div);
+  input.value = "";
+};
 
-      const file = pfpInput.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          localStorage.setItem("dl_pfp", e.target.result);
-          currentPfp = e.target.result;
-          applySettingsFromStorage();
-          closeSettings();
-        };
-        reader.readAsDataURL(file);
-      } else {
-        applySettingsFromStorage();
-        closeSettings();
-      }
-    }
+// INIT + EVENTS
+document.addEventListener("DOMContentLoaded", () => {
+  initUser();
+  applySettings();
+  loadMessages("general");
 
-    function handleLogin() {
-      const uInput = document.getElementById("login-username");
-      const pInput = document.getElementById("login-password");
-      const name = (uInput.value || "").trim();
-      const pass = (pInput.value || "").trim();
+  document.getElementById("login-button").onclick = handleLogin;
+  document.getElementById("login-username").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
+  document.getElementById("login-password").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
 
-      if (!name) return;
+  document.getElementById("send-button").onclick = sendTextMessage;
+  document.getElementById("message-input").onkeydown = e => {
+    if (e.key === "Enter") sendTextMessage();
+  };
 
-      currentUser = name;
-      localStorage.setItem("dl_username", currentUser);
-      localStorage.setItem("dl_password", pass);
-
-      document.getElementById("login-overlay").style.display = "none";
-      applyUserToUI();
-      loadMessagesForChannel(currentChannel);
-    }
-
-    // ALWAYS show login on startup
-    function initUserFromStorage() {
-      document.getElementById("login-overlay").style.display = "flex";
-
-      // clear any old auto-login data so it never skips
-      localStorage.removeItem("dl_username");
-      localStorage.removeItem("dl_password");
-
-      applyUserToUI();
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      // Init user + settings
-      initUserFromStorage();
-      applySettingsFromStorage();
-
-      // Channels
-      document.querySelectorAll(".channel").forEach((el) => {
-        el.addEventListener("click", () => {
-          currentChannel = el.getAttribute("data-channel") || "general";
-          document.getElementById("header").textContent = "#" + currentChannel;
-          loadMessagesForChannel(currentChannel);
-        });
-      });
-
-      // Initial messages load (will show once logged in)
-      loadMessagesForChannel(currentChannel);
-
-      // Send message
-      document.getElementById("send-button").addEventListener("click", sendMessage);
-      document.getElementById("message-input").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") sendMessage();
-      });
-
-      // Login
-      document.getElementById("login-button").addEventListener("click", handleLogin);
-      document.getElementById("login-username").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") handleLogin();
-      });
-      document.getElementById("login-password").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") handleLogin();
-      });
-
-      // Settings
-      document.getElementById("settings-icon").addEventListener("click", openSettings);
-      document.getElementById("settings-close").addEventListener("click", closeSettings);
-      document.getElementById("settings-overlay").addEventListener("click", (e) => {
-        if (e.target.id === "settings-overlay") closeSettings();
-      });
-      document.getElementById("settings-save").addEventListener("click", saveSettings);
-
-      // Add friend (simple local list)
-      document.getElementById("add-friend-button").addEventListener("click", () => {
-        const input = document.getElementById("add-friend-input");
-        const name = (input.value || "").trim();
-        if (!name) return;
-        const list = document.getElementById("friends-list");
-        const div = document.createElement("div");
-        div.className = "friend";
-        div.textContent = name;
-        list.appendChild(div);
-        input.value = "";
-      });
-    });
+  document.getElementById("settings-icon").onclick = openSettings;
+  document.getElementById("settings-close").onclick = closeSettings;
+  document.getElementById("settings-save").onclick = saveSettings;
+});
   </script>
 </body>
 </html>
