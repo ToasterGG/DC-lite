@@ -11,9 +11,9 @@
       font-family: Arial, sans-serif;
     }
 
-body, #main, #sidebar, #sidebar-inner, #messages, #header, #input-bar {
-  color: #ffffff !important;
-}
+    body, #main, #sidebar, #sidebar-inner, #messages, #header, #input-bar {
+      color: #ffffff !important;
+    }
 
     body {
       background-color: #202225;
@@ -658,7 +658,7 @@ body, #main, #sidebar, #sidebar-inner, #messages, #header, #input-bar {
     </div>
   </div>
 
-    <!-- Video modal -->
+  <!-- Video modal -->
   <div id="video-modal-overlay">
     <div id="video-modal">
       <div id="video-modal-top">
@@ -759,7 +759,7 @@ function applySettings() {
   if (dmPref) document.getElementById("dm-pref").value = dmPref;
 
   if (pfp) currentPfp = pfp;
-  applyUserToUI();
+  if (currentUser) applyUserToUI();
 }
 
 function saveSettings() {
@@ -1106,25 +1106,23 @@ document.getElementById("add-friend-button").onclick = () => {
   input.value = "";
 };
 
-// INIT + EVENTS
-document.addEventListener("DOMContentLoaded", () => {
-  initUser();
-  applySettings();
-  loadMessages("general");
+// INIT + EVENTS (run immediately, no DOMContentLoaded wrapper)
+initUser();
+applySettings();
+loadMessages("general");
 
-  document.getElementById("login-button").onclick = handleLogin;
-  document.getElementById("login-username").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
-  document.getElementById("login-password").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
+document.getElementById("login-button").onclick = handleLogin;
+document.getElementById("login-username").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
+document.getElementById("login-password").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
 
-  document.getElementById("send-button").onclick = sendTextMessage;
-  document.getElementById("message-input").onkeydown = e => {
-    if (e.key === "Enter") sendTextMessage();
-  };
+document.getElementById("send-button").onclick = sendTextMessage;
+document.getElementById("message-input").onkeydown = e => {
+  if (e.key === "Enter") sendTextMessage();
+};
 
-  document.getElementById("settings-icon").onclick = openSettings;
-  document.getElementById("settings-close").onclick = closeSettings;
-  document.getElementById("settings-save").onclick = saveSettings;
-});
+document.getElementById("settings-icon").onclick = openSettings;
+document.getElementById("settings-close").onclick = closeSettings;
+document.getElementById("settings-save").onclick = saveSettings;
   </script>
 </body>
 </html>
