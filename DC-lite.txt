@@ -106,6 +106,41 @@
       background-color: #4752c4;
     }
 
+    #add-channel-row,
+    #invite-friend-row {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    #add-channel-input,
+    #invite-friend-input {
+      flex: 1;
+      padding: 4px;
+      border-radius: 3px;
+      border: none;
+      outline: none;
+      background-color: #202225;
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    #add-channel-button,
+    #invite-friend-button {
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: none;
+      background-color: #5865f2;
+      color: #ffffff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    #add-channel-button:hover,
+    #invite-friend-button:hover {
+      background-color: #4752c4;
+    }
+
     /* User bar bottom-left */
     #user-bar {
       padding: 6px 8px;
@@ -147,6 +182,23 @@
     }
 
     #settings-icon:hover {
+      background-color: #3a3c43;
+      color: #ffffff;
+    }
+
+    #logout-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #b9bbbe;
+      flex-shrink: 0;
+    }
+
+    #logout-icon:hover {
       background-color: #3a3c43;
       color: #ffffff;
     }
@@ -401,6 +453,34 @@
       background-color: #4752c4;
     }
 
+    #login-mode {
+      display: flex;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .login-tab {
+      flex: 1;
+      padding: 6px;
+      border-radius: 3px;
+      border: 1px solid #202225;
+      background-color: #202225;
+      color: #ffffff;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .active-tab {
+      background-color: #5865f2;
+      border-color: #5865f2;
+    }
+    #login-error {
+      margin-top: 6px;
+      color: #ff6b6b;
+      font-size: 12px;
+      min-height: 14px;
+      text-align: center;
+    }
+
     /* Settings modal */
     #settings-overlay {
       position: fixed;
@@ -578,9 +658,11 @@
       <div id="sidebar-inner">
         <div>
           <div class="sidebar-section-title">Channels</div>
-          <div class="channel active-channel" data-channel="general">#general</div>
-          <div class="channel" data-channel="gaming">#gaming</div>
-          <div class="channel" data-channel="random">#random</div>
+          <div id="channels-list"></div>
+          <div id="add-channel-row">
+            <input id="add-channel-input" placeholder="Add channel">
+            <button id="add-channel-button">Add</button>
+          </div>
         </div>
 
         <div>
@@ -590,12 +672,19 @@
             <input id="add-friend-input" placeholder="Add friend by name">
             <button id="add-friend-button">Add</button>
           </div>
+          <div class="sidebar-section-title" style="margin-top:8px;">Invites</div>
+          <div id="invites-list"></div>
+          <div id="invite-friend-row">
+            <input id="invite-friend-input" placeholder="Invite friend by name">
+            <button id="invite-friend-button">Invite</button>
+          </div>
         </div>
       </div>
 
       <div id="user-bar">
         <img id="user-pfp" src="" alt="PFP">
         <div id="user-name">User</div>
+        <div id="logout-icon" title="Sign out">⎋</div>
         <div id="settings-icon" title="Settings">⚙</div>
       </div>
     </div>
@@ -616,6 +705,10 @@
   <div id="login-overlay">
     <div id="login-box">
       <h2>Sign in</h2>
+      <div id="login-mode">
+        <button id="login-tab-signin" class="login-tab active-tab">Sign in</button>
+        <button id="login-tab-create" class="login-tab">Create account</button>
+      </div>
       <div class="login-field">
         <label for="login-username">Username</label>
         <input id="login-username" type="text">
@@ -625,6 +718,7 @@
         <input id="login-password" type="password">
       </div>
       <button id="login-button">Login / Register</button>
+      <div id="login-error"></div>
     </div>
   </div>
 
@@ -655,6 +749,7 @@
       </div>
 
       <button id="settings-save">Save</button>
+      <button id="settings-logout">Sign Out</button>
     </div>
   </div>
 
@@ -702,6 +797,12 @@ let currentPfp = null;
 let currentChannel = "general";
 let currentVideoData = null;
 let currentVideoFilename = null;
+let channelList = [];
+let friendList = [];
+let loginMode = "signin";
+function normalizeUsername(s) {
+  return (s || "").trim().toLowerCase();
+}
 
 // Default PFP generator
 function defaultPfp(letter) {
@@ -722,17 +823,88 @@ function applyUserToUI() {
 }
 
 // LOGIN
-function handleLogin() {
-  const u = document.getElementById("login-username").value.trim();
+async function hashPassword(pw) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function setLoginMode(mode) {
+  loginMode = mode;
+  const signBtn = document.getElementById("login-tab-signin");
+  const createBtn = document.getElementById("login-tab-create");
+  signBtn.classList.toggle("active-tab", mode === "signin");
+  createBtn.classList.toggle("active-tab", mode === "create");
+  document.getElementById("login-button").textContent = mode === "signin" ? "Sign in" : "Create account";
+  document.getElementById("login-error").textContent = "";
+}
+
+function showError(msg) {
+  const el = document.getElementById("login-error");
+  el.textContent = msg || "";
+}
+
+async function createAccount(u, p) {
+  u = normalizeUsername(u);
+  const userRef = db.ref("users/" + u);
+  const existing = await userRef.once("value");
+  if (existing.val()) {
+    showError("Username already taken");
+    return false;
+  }
+  const hash = await hashPassword(p);
+  await userRef.set({ passwordHash: hash, createdAt: Date.now() });
+  return true;
+}
+
+async function signIn(u, p) {
+  u = normalizeUsername(u);
+  const userRef = db.ref("users/" + u);
+  const snap = await userRef.once("value");
+  const data = snap.val();
+  if (!data) {
+    showError("Account not found");
+    return false;
+  }
+  const hash = await hashPassword(p);
+  const stored = data.passwordHash;
+  if (stored && typeof stored === "string") {
+    if (stored !== hash) {
+      showError("Incorrect password");
+      return false;
+    }
+    return true;
+  }
+  if (data.password && data.password === p) {
+    await userRef.set({ passwordHash: hash, createdAt: data.createdAt || Date.now() });
+    return true;
+  }
+  showError("Incorrect password");
+  return true;
+}
+
+async function handleLogin() {
+  const u = normalizeUsername(document.getElementById("login-username").value);
   const p = document.getElementById("login-password").value.trim();
   if (!u) return;
+  if (!p) { showError("Enter a password"); return; }
+
+  showError("");
+  if (loginMode === "create") {
+    const ok = await createAccount(u, p);
+    if (!ok) return;
+  } else {
+    const ok = await signIn(u, p);
+    if (!ok) return;
+  }
 
   currentUser = u;
-  localStorage.setItem("dl_username", u);
-  localStorage.setItem("dl_password", p);
 
   document.getElementById("login-overlay").style.display = "none";
   applyUserToUI();
+  applySettings();
+  restoreState();
+  const last = localStorage.getItem("dl_lastChannel") || "general";
+  setActiveChannel(last);
   loadMessages(currentChannel);
 }
 
@@ -740,6 +912,7 @@ function initUser() {
   document.getElementById("login-overlay").style.display = "flex";
   localStorage.removeItem("dl_username");
   localStorage.removeItem("dl_password");
+  setLoginMode("signin");
 }
 
 // SETTINGS
@@ -791,6 +964,91 @@ function openSettings() {
 
 function closeSettings() {
   document.getElementById("settings-overlay").style.display = "none";
+}
+
+function logout() {
+  currentUser = null;
+  currentPfp = null;
+  localStorage.removeItem("dl_username");
+  localStorage.removeItem("dl_password");
+  document.getElementById("user-name").textContent = "User";
+  document.getElementById("user-pfp").src = "";
+  document.getElementById("login-overlay").style.display = "flex";
+}
+
+function restoreState() {
+  const channels = JSON.parse(localStorage.getItem("dl_channels") || "[]");
+  if (channels.length === 0) {
+    channelList = ["general", "gaming", "random"];
+  } else {
+    channelList = channels;
+  }
+  renderChannels();
+
+  const friends = JSON.parse(localStorage.getItem("dl_friends") || "[]");
+  friendList = friends;
+  renderFriends();
+
+  listenInvites();
+}
+
+function renderChannels() {
+  const listEl = document.getElementById("channels-list");
+  listEl.innerHTML = "";
+  channelList.forEach(name => {
+    const div = document.createElement("div");
+    div.className = "channel";
+    div.setAttribute("data-channel", name);
+    div.textContent = "#" + name;
+    div.onclick = () => {
+      document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
+      document.querySelectorAll(".friend").forEach(f => f.classList.remove("active-friend"));
+      div.classList.add("active-channel");
+      currentChannel = name;
+      document.getElementById("header").textContent = "#" + currentChannel;
+      localStorage.setItem("dl_lastChannel", currentChannel);
+      loadMessages(currentChannel);
+    };
+    listEl.appendChild(div);
+  });
+}
+
+function setActiveChannel(name) {
+  currentChannel = name;
+  document.getElementById("header").textContent = "#" + currentChannel;
+  document.querySelectorAll(".channel").forEach(c => {
+    c.classList.remove("active-channel");
+    if (c.getAttribute("data-channel") === name) c.classList.add("active-channel");
+  });
+  localStorage.setItem("dl_lastChannel", currentChannel);
+}
+
+function addChannel(name) {
+  if (!name) return;
+  if (channelList.includes(name)) return;
+  channelList.push(name);
+  localStorage.setItem("dl_channels", JSON.stringify(channelList));
+  renderChannels();
+}
+
+function renderFriends() {
+  const listEl = document.getElementById("friends-list");
+  listEl.innerHTML = "";
+  friendList.forEach(name => {
+    const div = document.createElement("div");
+    div.className = "friend";
+    div.textContent = name;
+    div.onclick = () => openDM(name);
+    listEl.appendChild(div);
+  });
+}
+
+function addFriend(name) {
+  if (!name) return;
+  if (friendList.includes(name)) return;
+  friendList.push(name);
+  localStorage.setItem("dl_friends", JSON.stringify(friendList));
+  renderFriends();
 }
 
 // DM SYSTEM
@@ -1076,20 +1334,14 @@ function openImageModal(data) {
   };
 }
 
-// CHANNEL SWITCHING
-document.querySelectorAll(".channel").forEach(el => {
-  el.onclick = () => {
-    document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
-    document.querySelectorAll(".friend").forEach(f => f.classList.remove("active-friend"));
-
-    el.classList.add("active-channel");
-
-    currentChannel = el.getAttribute("data-channel");
-    document.getElementById("header").textContent = "#" + currentChannel;
-
-    loadMessages(currentChannel);
-  };
-});
+// CHANNEL CREATION
+document.getElementById("add-channel-button").onclick = () => {
+  const input = document.getElementById("add-channel-input");
+  const name = input.value.trim().toLowerCase();
+  if (!name) return;
+  addChannel(name);
+  input.value = "";
+};
 
 // FRIENDS / DMs
 document.getElementById("add-friend-button").onclick = () => {
@@ -1097,23 +1349,80 @@ document.getElementById("add-friend-button").onclick = () => {
   const name = input.value.trim();
   if (!name) return;
 
-  const div = document.createElement("div");
-  div.className = "friend";
-  div.textContent = name;
-  div.onclick = () => openDM(name);
+  addFriend(name);
+  input.value = "";
+};
 
-  document.getElementById("friends-list").appendChild(div);
+// INVITES
+function inviteFriend(name) {
+  if (!name) return;
+  db.ref("invites/" + name + "/" + currentUser).set({ ts: Date.now() });
+}
+
+function listenInvites() {
+  if (!currentUser) return;
+  db.ref("invites/" + currentUser).off();
+  db.ref("invites/" + currentUser).on("value", snap => {
+    const data = snap.val() || {};
+    const dmPref = localStorage.getItem("dl_dmPref") || "on";
+    const listEl = document.getElementById("invites-list");
+    listEl.innerHTML = "";
+    Object.keys(data).forEach(from => {
+      if (dmPref === "on") {
+        addFriend(from);
+        db.ref("invites/" + currentUser + "/" + from).remove();
+        return;
+      }
+      const row = document.createElement("div");
+      row.className = "friend";
+      row.textContent = "Invite from " + from;
+      const accept = document.createElement("button");
+      accept.textContent = "Accept";
+      accept.style.marginLeft = "6px";
+      accept.onclick = () => {
+        addFriend(from);
+        db.ref("invites/" + currentUser + "/" + from).remove();
+      };
+      const decline = document.createElement("button");
+      decline.textContent = "Decline";
+      decline.style.marginLeft = "4px";
+      decline.onclick = () => {
+        db.ref("invites/" + currentUser + "/" + from).remove();
+      };
+      const container = document.createElement("div");
+      container.style.display = "flex";
+      container.style.alignItems = "center";
+      container.style.gap = "4px";
+      container.appendChild(row);
+      container.appendChild(accept);
+      container.appendChild(decline);
+      listEl.appendChild(container);
+    });
+  });
+}
+
+document.getElementById("invite-friend-button").onclick = () => {
+  const input = document.getElementById("invite-friend-input");
+  const name = input.value.trim();
+  if (!name) return;
+  inviteFriend(name);
   input.value = "";
 };
 
 // INIT + EVENTS (run immediately, no DOMContentLoaded wrapper)
 initUser();
 applySettings();
-loadMessages("general");
+restoreState();
+const startChannel = localStorage.getItem("dl_lastChannel") || "general";
+renderChannels();
+setActiveChannel(startChannel);
+loadMessages(startChannel);
 
 document.getElementById("login-button").onclick = handleLogin;
 document.getElementById("login-username").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
 document.getElementById("login-password").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
+document.getElementById("login-tab-signin").onclick = () => setLoginMode("signin");
+document.getElementById("login-tab-create").onclick = () => setLoginMode("create");
 
 document.getElementById("send-button").onclick = sendTextMessage;
 document.getElementById("message-input").onkeydown = e => {
@@ -1123,6 +1432,8 @@ document.getElementById("message-input").onkeydown = e => {
 document.getElementById("settings-icon").onclick = openSettings;
 document.getElementById("settings-close").onclick = closeSettings;
 document.getElementById("settings-save").onclick = saveSettings;
+document.getElementById("logout-icon").onclick = logout;
+document.getElementById("settings-logout").onclick = () => { closeSettings(); logout(); };
   </script>
 </body>
 </html>
