@@ -770,6 +770,7 @@
   <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
 
   <script>
 /* -------------------------------------------------------
@@ -824,8 +825,21 @@ function applyUserToUI() {
 
 // LOGIN
 async function hashPassword(pw) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pw));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  try {
+    if (window.crypto && window.crypto.subtle) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pw));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+  } catch (e) {}
+  if (window.CryptoJS && CryptoJS.SHA256) {
+    return CryptoJS.SHA256(pw).toString(CryptoJS.enc.Hex);
+  }
+  let hash = 5381;
+  for (let i = 0; i < pw.length; i++) {
+    hash = ((hash << 5) + hash) + pw.charCodeAt(i);
+    hash |= 0;
+  }
+  return ("00000000" + (hash >>> 0).toString(16)).slice(-8);
 }
 
 function setLoginMode(mode) {
@@ -879,7 +893,7 @@ async function signIn(u, p) {
     return true;
   }
   showError("Incorrect password");
-  return true;
+  return false;
 }
 
 async function handleLogin() {
