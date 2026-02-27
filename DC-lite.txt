@@ -859,41 +859,70 @@ function showError(msg) {
 
 async function createAccount(u, p) {
   u = normalizeUsername(u);
-  const userRef = db.ref("users/" + u);
-  const existing = await userRef.once("value");
-  if (existing.val()) {
-    showError("Username already taken");
-    return false;
-  }
   const hash = await hashPassword(p);
-  await userRef.set({ passwordHash: hash, createdAt: Date.now() });
+  try {
+    const userRef = db.ref("users/" + u);
+    const existing = await userRef.once("value");
+    if (existing.val()) {
+      showError("Username already taken");
+      return false;
+    }
+    await userRef.set({ passwordHash: hash, createdAt: Date.now() });
+  } catch (e) {}
+  try {
+    const users = JSON.parse(localStorage.getItem("dl_users") || "{}");
+    if (users[u]) {
+      showError("Username already taken");
+      return false;
+    }
+    users[u] = { passwordHash: hash, createdAt: Date.now() };
+    localStorage.setItem("dl_users", JSON.stringify(users));
+  } catch (e) {}
   return true;
 }
 
 async function signIn(u, p) {
   u = normalizeUsername(u);
-  const userRef = db.ref("users/" + u);
-  const snap = await userRef.once("value");
-  const data = snap.val();
-  if (!data) {
-    showError("Account not found");
-    return false;
-  }
   const hash = await hashPassword(p);
-  const stored = data.passwordHash;
-  if (stored && typeof stored === "string") {
-    if (stored !== hash) {
-      showError("Incorrect password");
+  try {
+    const userRef = db.ref("users/" + u);
+    const snap = await userRef.once("value");
+    const data = snap.val();
+    if (!data) {
+      throw new Error("not_found");
+    }
+    const stored = data.passwordHash;
+    if (stored && typeof stored === "string") {
+      if (stored !== hash) {
+        showError("Incorrect password");
+        return false;
+      }
+      return true;
+    }
+    if (data.password && data.password === p) {
+      await userRef.set({ passwordHash: hash, createdAt: data.createdAt || Date.now() });
+      return true;
+    }
+    showError("Incorrect password");
+    return false;
+  } catch (e) {
+    try {
+      const users = JSON.parse(localStorage.getItem("dl_users") || "{}");
+      const data = users[u];
+      if (!data) {
+        showError("Account not found");
+        return false;
+      }
+      if (data.passwordHash !== hash) {
+        showError("Incorrect password");
+        return false;
+      }
+      return true;
+    } catch (e2) {
+      showError("Unable to sign in");
       return false;
     }
-    return true;
   }
-  if (data.password && data.password === p) {
-    await userRef.set({ passwordHash: hash, createdAt: data.createdAt || Date.now() });
-    return true;
-  }
-  showError("Incorrect password");
-  return false;
 }
 
 async function handleLogin() {
@@ -1435,8 +1464,8 @@ loadMessages(startChannel);
 document.getElementById("login-button").onclick = handleLogin;
 document.getElementById("login-username").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
 document.getElementById("login-password").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
-document.getElementById("login-tab-signin").onclick = () => setLoginMode("signin");
-document.getElementById("login-tab-create").onclick = () => setLoginMode("create");
+document.getElementById("login-tab-signin").onclick = () => { setLoginMode("signin"); handleLogin(); };
+document.getElementById("login-tab-create").onclick = () => { setLoginMode("create"); handleLogin(); };
 
 document.getElementById("send-button").onclick = sendTextMessage;
 document.getElementById("message-input").onkeydown = e => {
