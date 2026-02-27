@@ -789,8 +789,61 @@ const firebaseConfig = {
   measurementId: "G-YZ5VD42XVV"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+let db;
+try {
+  if (window.firebase && firebase.initializeApp) {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  } else {
+    throw new Error("firebase_unavailable");
+  }
+} catch (e) {
+  const makeLocalDb = () => {
+    const listeners = {};
+    const k = p => "dl_db_" + p;
+    const read = p => JSON.parse(localStorage.getItem(k(p)) || "null");
+    const write = (p, v) => localStorage.setItem(k(p), JSON.stringify(v));
+    const notify = p => {
+      const list = listeners[p] || [];
+      const data = read(p);
+      list.forEach(cb => cb({ val: () => data }));
+    };
+    return {
+      ref(path) {
+        return {
+          on(event, cb) {
+            if (event !== "value") return;
+            listeners[path] = listeners[path] || [];
+            listeners[path].push(cb);
+            cb({ val: () => read(path) });
+          },
+          off() {
+            listeners[path] = [];
+          },
+          set(value) {
+            write(path, value);
+            notify(path);
+          },
+          push(value) {
+            const data = read(path) || {};
+            const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+            data[id] = value;
+            write(path, data);
+            notify(path);
+          },
+          remove() {
+            localStorage.removeItem(k(path));
+            notify(path);
+          },
+          once() {
+            return Promise.resolve({ val: () => read(path) });
+          }
+        };
+      }
+    };
+  };
+  db = makeLocalDb();
+}
 
 // Globals
 let currentUser = null;
