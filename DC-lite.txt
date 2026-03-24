@@ -28,7 +28,6 @@
       width: 100vw;
     }
 
-    /* Sidebar */
     #sidebar {
       width: 260px;
       background-color: #2b2d31;
@@ -106,7 +105,6 @@
       background-color: #4752c4;
     }
 
-    /* User bar bottom-left */
     #user-bar {
       padding: 6px 8px;
       background-color: #232428;
@@ -151,7 +149,6 @@
       color: #ffffff;
     }
 
-    /* Main area */
     #main {
       flex: 1;
       display: flex;
@@ -209,7 +206,6 @@
       word-wrap: break-word;
     }
 
-    /* Media in messages */
     .message-image {
       margin-top: 3px;
       max-width: 100%;
@@ -333,12 +329,10 @@
       background-color: #4752c4;
     }
 
-    /* Hidden file input */
     #file-input {
       display: none;
     }
 
-    /* Login overlay */
     #login-overlay {
       position: fixed;
       inset: 0;
@@ -401,7 +395,6 @@
       background-color: #4752c4;
     }
 
-    /* Settings modal */
     #settings-overlay {
       position: fixed;
       inset: 0;
@@ -482,7 +475,6 @@
       background-color: #4752c4;
     }
 
-    /* Video modal (blurred background) */
     #video-modal-overlay {
       position: fixed;
       inset: 0;
@@ -546,7 +538,6 @@
       background-color: #4752c4;
     }
 
-    /* Watermark */
     #watermark {
       position: fixed;
       right: 8px;
@@ -556,20 +547,10 @@
       z-index: 10;
     }
 
-    /* Scrollbars */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #2b2d31;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #202225;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #18191c;
-    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #2b2d31; }
+    ::-webkit-scrollbar-thumb { background: #202225; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #18191c; }
   </style>
 </head>
 <body>
@@ -634,17 +615,14 @@
         <h2>User Settings</h2>
         <div id="settings-close">&times;</div>
       </div>
-
       <div class="settings-section">
         <label for="pfp-input">Profile picture</label>
         <input type="file" id="pfp-input" accept="image/*">
       </div>
-
       <div class="settings-section">
         <label for="bg-picker">Background colour</label>
         <input type="color" id="bg-picker">
       </div>
-
       <div class="settings-section">
         <label for="dm-pref">DM preferences</label>
         <select id="dm-pref">
@@ -653,12 +631,10 @@
           <option value="off">DMs Off</option>
         </select>
       </div>
-
       <button id="settings-save">Save</button>
     </div>
   </div>
 
-  <!-- Video modal -->
   <div id="video-modal-overlay">
     <div id="video-modal">
       <div id="video-modal-top">
@@ -672,15 +648,10 @@
 
   <div id="watermark">made by Toby Ulliott</div>
 
-  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
-/* -------------------------------------------------------
-   FULL JAVASCRIPT — FIXED LOGIN + FIXED BACKGROUND + MEDIA
--------------------------------------------------------- */
-
 // Firebase Init
 const firebaseConfig = {
   apiKey: "AIzaSyAcHjp8HQfqNTeaNJB-SHYFIIsvtw6VUn0",
@@ -703,22 +674,63 @@ let currentChannel = "general";
 let currentVideoData = null;
 let currentVideoFilename = null;
 
+// ── STORAGE HELPERS ──────────────────────────────────────────────────────────
+// The bookmarklet runs document.write() which wipes the page each launch, but
+// localStorage persists on the same origin across sessions, so all user data
+// (friends, pfp, settings) survives relaunches and login/logout cycles.
+// Friends and PFP are keyed per-username so multiple accounts don't clash.
+
+function lsGet(key) {
+  try { return localStorage.getItem(key); } catch(_) { return null; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, val); } catch(_) {}
+}
+
+// Friends: stored as JSON array under "dl_friends_<username>"
+function friendsKey(u) { return "dl_friends_" + u; }
+
+function loadFriends(username) {
+  try { return JSON.parse(lsGet(friendsKey(username))) || []; }
+  catch(_) { return []; }
+}
+
+function persistFriend(username, friendName) {
+  const list = loadFriends(username);
+  if (list.includes(friendName)) return false; // duplicate
+  list.push(friendName);
+  lsSet(friendsKey(username), JSON.stringify(list));
+  return true;
+}
+
+function renderFriendEntry(name) {
+  const div = document.createElement("div");
+  div.className = "friend";
+  div.textContent = name;
+  div.onclick = () => openDM(name);
+  document.getElementById("friends-list").appendChild(div);
+}
+
+function renderAllFriends(username) {
+  document.getElementById("friends-list").innerHTML = "";
+  loadFriends(username).forEach(renderFriendEntry);
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 // Default PFP generator
 function defaultPfp(letter) {
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-      <rect width="64" height="64" fill="#3a3c43"/>
-      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-        fill="#b9bbbe" font-size="26" font-family="Arial">${letter}</text>
-    </svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+    <rect width="64" height="64" fill="#3a3c43"/>
+    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+      fill="#b9bbbe" font-size="26" font-family="Arial">${letter}</text>
+  </svg>`;
   return "data:image/svg+xml;base64," + btoa(svg);
 }
 
-// Apply username + PFP to UI
 function applyUserToUI() {
   document.getElementById("user-name").textContent = currentUser;
-  const pfpEl = document.getElementById("user-pfp");
-  pfpEl.src = currentPfp || defaultPfp(currentUser.charAt(0).toUpperCase());
+  document.getElementById("user-pfp").src =
+    currentPfp || defaultPfp(currentUser.charAt(0).toUpperCase());
 }
 
 // LOGIN
@@ -728,25 +740,27 @@ function handleLogin() {
   if (!u) return;
 
   currentUser = u;
-  localStorage.setItem("dl_username", u);
-  localStorage.setItem("dl_password", p);
+  lsSet("dl_username", u);
+  lsSet("dl_password", p);
+
+  // Restore per-user PFP
+  currentPfp = lsGet("dl_pfp_" + u) || null;
 
   document.getElementById("login-overlay").style.display = "none";
   applyUserToUI();
+  applySettings();           // reapply bg/dm prefs now that user is known
+  renderAllFriends(u);       // ← restore saved friends list
   loadMessages(currentChannel);
 }
 
 function initUser() {
   document.getElementById("login-overlay").style.display = "flex";
-  localStorage.removeItem("dl_username");
-  localStorage.removeItem("dl_password");
 }
 
 // SETTINGS
 function applySettings() {
-  const bg = localStorage.getItem("dl_bgColor");
-  const dmPref = localStorage.getItem("dl_dmPref");
-  const pfp = localStorage.getItem("dl_pfp");
+  const bg = lsGet("dl_bgColor");
+  const dmPref = lsGet("dl_dmPref");
 
   if (bg) {
     document.body.style.backgroundColor = bg;
@@ -755,10 +769,7 @@ function applySettings() {
     document.getElementById("sidebar-inner").style.backgroundColor = bg;
     document.getElementById("bg-picker").value = bg;
   }
-
   if (dmPref) document.getElementById("dm-pref").value = dmPref;
-
-  if (pfp) currentPfp = pfp;
   if (currentUser) applyUserToUI();
 }
 
@@ -767,13 +778,14 @@ function saveSettings() {
   const dmPref = document.getElementById("dm-pref").value;
   const pfpFile = document.getElementById("pfp-input").files[0];
 
-  localStorage.setItem("dl_bgColor", bg);
-  localStorage.setItem("dl_dmPref", dmPref);
+  lsSet("dl_bgColor", bg);
+  lsSet("dl_dmPref", dmPref);
 
   if (pfpFile) {
     const reader = new FileReader();
     reader.onload = e => {
-      localStorage.setItem("dl_pfp", e.target.result);
+      // Store pfp under per-user key so different accounts don't overwrite each other
+      lsSet("dl_pfp_" + currentUser, e.target.result);
       currentPfp = e.target.result;
       applySettings();
       closeSettings();
@@ -785,40 +797,30 @@ function saveSettings() {
   }
 }
 
-function openSettings() {
-  document.getElementById("settings-overlay").style.display = "flex";
-}
-
-function closeSettings() {
-  document.getElementById("settings-overlay").style.display = "none";
-}
+function openSettings() { document.getElementById("settings-overlay").style.display = "flex"; }
+function closeSettings() { document.getElementById("settings-overlay").style.display = "none"; }
 
 // DM SYSTEM
 function dmChannelName(a, b) {
-  const sorted = [a, b].sort();
-  return "dm_" + sorted[0] + "_" + sorted[1];
+  return "dm_" + [a, b].sort().join("_");
 }
 
 function openDM(friendName) {
-  const dm = dmChannelName(currentUser, friendName);
-  currentChannel = dm;
-
+  currentChannel = dmChannelName(currentUser, friendName);
   document.getElementById("header").textContent = "@" + friendName;
 
   document.querySelectorAll(".friend").forEach(f => f.classList.remove("active-friend"));
   [...document.getElementById("friends-list").children].forEach(el => {
     if (el.textContent === friendName) el.classList.add("active-friend");
   });
-
   document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
 
-  loadMessages(dm);
+  loadMessages(currentChannel);
 }
 
 // MESSAGE RENDERING
 function appendMessage(msg) {
   const messages = document.getElementById("messages");
-
   const row = document.createElement("div");
   row.className = "message-row";
 
@@ -832,7 +834,6 @@ function appendMessage(msg) {
   const name = document.createElement("span");
   name.className = "message-username";
   name.textContent = msg.user + ": ";
-
   content.appendChild(name);
 
   if (msg.type === "text") {
@@ -853,44 +854,34 @@ function appendMessage(msg) {
   if (msg.type === "video") {
     const wrap = document.createElement("div");
     wrap.className = "message-video-thumb-wrapper";
-
     const thumb = document.createElement("img");
     thumb.className = "message-video-thumb";
     thumb.src = msg.thumbnail;
-
     const play = document.createElement("div");
     play.className = "message-video-play";
     play.textContent = "▶";
-
     wrap.appendChild(thumb);
     wrap.appendChild(play);
-
     wrap.onclick = () => openVideoModal(msg.data, msg.filename);
-
     content.appendChild(wrap);
   }
 
   if (msg.type === "file") {
     const card = document.createElement("div");
     card.className = "message-file-card";
-
     const nameEl = document.createElement("div");
     nameEl.className = "message-file-name";
     nameEl.textContent = "📄 " + msg.filename;
-
     const sizeEl = document.createElement("div");
     sizeEl.className = "message-file-size";
     sizeEl.textContent = (msg.size / 1024).toFixed(1) + " KB";
-
     const btn = document.createElement("button");
     btn.className = "message-file-download";
     btn.textContent = "Download";
     btn.onclick = () => downloadBase64(msg.data, msg.filename);
-
     card.appendChild(nameEl);
     card.appendChild(sizeEl);
     card.appendChild(btn);
-
     content.appendChild(card);
   }
 
@@ -904,14 +895,11 @@ function appendMessage(msg) {
 function loadMessages(channel) {
   const messages = document.getElementById("messages");
   messages.innerHTML = "";
-
   db.ref("messages/" + channel).off();
-
   db.ref("messages/" + channel).on("value", snap => {
     messages.innerHTML = "";
     const data = snap.val();
     if (!data) return;
-
     Object.values(data).forEach(msg => appendMessage(msg));
   });
 }
@@ -921,125 +909,79 @@ function sendTextMessage() {
   const input = document.getElementById("message-input");
   const text = input.value.trim();
   if (!text) return;
-
-  const msg = {
-    user: currentUser,
-    pfp: currentPfp || null,
-    type: "text",
-    text: text,
-    ts: Date.now()
-  };
-
-  db.ref("messages/" + currentChannel).push(msg);
+  db.ref("messages/" + currentChannel).push({
+    user: currentUser, pfp: currentPfp || null,
+    type: "text", text, ts: Date.now()
+  });
   input.value = "";
 }
 
 // FILE UPLOAD
-document.getElementById("upload-button").onclick = () => {
+document.getElementById("upload-button").onclick = () =>
   document.getElementById("file-input").click();
-};
 
 document.getElementById("file-input").onchange = async e => {
-  const files = [...e.target.files];
-  for (let file of files) {
-    await handleFileUpload(file);
-  }
+  for (let file of [...e.target.files]) await handleFileUpload(file);
   e.target.value = "";
 };
 
 async function handleFileUpload(file) {
   const reader = new FileReader();
-
   reader.onload = async e => {
     const base64 = e.target.result;
-
-    if (file.type.startsWith("image/")) {
-      sendImage(base64);
-      return;
-    }
-
+    if (file.type.startsWith("image/")) { sendImage(base64); return; }
     if (file.type.startsWith("video/")) {
       const thumb = await generateVideoThumbnail(file);
       sendVideo(base64, file.name, thumb);
       return;
     }
-
     sendFile(base64, file.name, file.size);
   };
-
   reader.readAsDataURL(file);
 }
 
-// SEND MEDIA
 function sendImage(data) {
   db.ref("messages/" + currentChannel).push({
-    user: currentUser,
-    pfp: currentPfp || null,
-    type: "image",
-    data,
-    ts: Date.now()
+    user: currentUser, pfp: currentPfp || null, type: "image", data, ts: Date.now()
   });
 }
-
 function sendVideo(data, filename, thumbnail) {
   db.ref("messages/" + currentChannel).push({
-    user: currentUser,
-    pfp: currentPfp || null,
-    type: "video",
-    data,
-    filename,
-    thumbnail,
-    ts: Date.now()
+    user: currentUser, pfp: currentPfp || null, type: "video", data, filename, thumbnail, ts: Date.now()
   });
 }
-
 function sendFile(data, filename, size) {
   db.ref("messages/" + currentChannel).push({
-    user: currentUser,
-    pfp: currentPfp || null,
-    type: "file",
-    data,
-    filename,
-    size,
-    ts: Date.now()
+    user: currentUser, pfp: currentPfp || null, type: "file", data, filename, size, ts: Date.now()
   });
 }
 
-// VIDEO THUMBNAIL
 function generateVideoThumbnail(file) {
   return new Promise(resolve => {
     const video = document.createElement("video");
     video.src = URL.createObjectURL(file);
     video.currentTime = 0.1;
-
     video.onloadeddata = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = 160;
-      canvas.height = 90;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, 160, 90);
+      canvas.width = 160; canvas.height = 90;
+      canvas.getContext("2d").drawImage(video, 0, 0, 160, 90);
       resolve(canvas.toDataURL("image/jpeg"));
     };
   });
 }
 
-// DOWNLOAD BASE64
 function downloadBase64(data, filename) {
   const a = document.createElement("a");
-  a.href = data;
-  a.download = filename;
-  a.click();
+  a.href = data; a.download = filename; a.click();
 }
 
 // VIDEO MODAL
 function openVideoModal(data, filename) {
   currentVideoData = data;
   currentVideoFilename = filename;
-
   const player = document.getElementById("video-modal-player");
   player.style.display = "block";
   player.src = data;
-
   document.getElementById("video-modal-filename").textContent = filename;
   document.getElementById("video-modal-overlay").style.display = "flex";
 }
@@ -1048,24 +990,18 @@ document.getElementById("video-modal-close").onclick = () => {
   document.getElementById("video-modal-overlay").style.display = "none";
   document.getElementById("video-modal-player").pause();
 };
-
-document.getElementById("video-modal-download").onclick = () => {
+document.getElementById("video-modal-download").onclick = () =>
   downloadBase64(currentVideoData, currentVideoFilename);
-};
 
-// IMAGE MODAL (reuses video modal)
+// IMAGE MODAL
 function openImageModal(data) {
-  const player = document.getElementById("video-modal-player");
-  player.style.display = "none";
-
+  document.getElementById("video-modal-player").style.display = "none";
   document.getElementById("video-modal-filename").textContent = "Image";
   document.getElementById("video-modal-overlay").style.display = "flex";
 
   const img = document.createElement("img");
   img.src = data;
-  img.style.maxWidth = "100%";
-  img.style.maxHeight = "70vh";
-  img.style.borderRadius = "4px";
+  img.style.cssText = "max-width:100%;max-height:70vh;border-radius:4px;";
 
   const modal = document.getElementById("video-modal");
   modal.insertBefore(img, document.getElementById("video-modal-download"));
@@ -1073,6 +1009,11 @@ function openImageModal(data) {
   document.getElementById("video-modal-close").onclick = () => {
     img.remove();
     document.getElementById("video-modal-overlay").style.display = "none";
+    // restore default close handler for video modal
+    document.getElementById("video-modal-close").onclick = () => {
+      document.getElementById("video-modal-overlay").style.display = "none";
+      document.getElementById("video-modal-player").pause();
+    };
   };
 }
 
@@ -1081,32 +1022,29 @@ document.querySelectorAll(".channel").forEach(el => {
   el.onclick = () => {
     document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
     document.querySelectorAll(".friend").forEach(f => f.classList.remove("active-friend"));
-
     el.classList.add("active-channel");
-
     currentChannel = el.getAttribute("data-channel");
     document.getElementById("header").textContent = "#" + currentChannel;
-
     loadMessages(currentChannel);
   };
 });
 
-// FRIENDS / DMs
+// ADD FRIEND — saves to localStorage so it survives relaunch/logout
 document.getElementById("add-friend-button").onclick = () => {
   const input = document.getElementById("add-friend-input");
   const name = input.value.trim();
   if (!name) return;
-
-  const div = document.createElement("div");
-  div.className = "friend";
-  div.textContent = name;
-  div.onclick = () => openDM(name);
-
-  document.getElementById("friends-list").appendChild(div);
+  const added = persistFriend(currentUser, name); // save first
+  if (added) renderFriendEntry(name);             // then render (skips duplicates)
   input.value = "";
 };
 
-// INIT + EVENTS (run immediately, no DOMContentLoaded wrapper)
+// Allow pressing Enter in add-friend input
+document.getElementById("add-friend-input").onkeydown = e => {
+  if (e.key === "Enter") document.getElementById("add-friend-button").click();
+};
+
+// INIT
 initUser();
 applySettings();
 loadMessages("general");
@@ -1114,12 +1052,8 @@ loadMessages("general");
 document.getElementById("login-button").onclick = handleLogin;
 document.getElementById("login-username").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
 document.getElementById("login-password").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
-
 document.getElementById("send-button").onclick = sendTextMessage;
-document.getElementById("message-input").onkeydown = e => {
-  if (e.key === "Enter") sendTextMessage();
-};
-
+document.getElementById("message-input").onkeydown = e => { if (e.key === "Enter") sendTextMessage(); };
 document.getElementById("settings-icon").onclick = openSettings;
 document.getElementById("settings-close").onclick = closeSettings;
 document.getElementById("settings-save").onclick = saveSettings;
