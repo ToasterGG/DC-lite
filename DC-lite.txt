@@ -472,6 +472,7 @@ function lastSeenKey(channelKey) {
 
 function markChannelRead(channelKey) {
   lsSet(lastSeenKey(channelKey), Date.now().toString());
+  if (window._badgeCounts) window._badgeCounts[channelKey] = 0;
   setBadge(channelKey, 0);
 }
 
@@ -481,16 +482,20 @@ function watchUnreads(channelKey) {
   if (watchingChannels[channelKey]) return;
   watchingChannels[channelKey] = true;
 
-  db.ref("messages/" + channelKey).on("value", snap => {
-    // If we're currently viewing this channel, just mark it read
+  // Use child_added for badge watching too — avoids full re-download
+  // We track a local count per channel rather than scanning all messages
+  const badgeCounts = badgeCounts || {};
+  if (!window._badgeCounts) window._badgeCounts = {};
+
+  db.ref("messages/" + channelKey).orderByChild("ts").on("child_added", snap => {
     if (channelKey === currentChannel) { markChannelRead(channelKey); return; }
-
-    const data = snap.val();
-    if (!data) { setBadge(channelKey, 0); return; }
-
+    const msg = snap.val();
+    if (!msg) return;
     const lastSeen = parseInt(lsGet(lastSeenKey(channelKey)) || "0", 10);
-    const unseen   = Object.values(data).filter(m => m.ts > lastSeen && m.user !== currentUser);
-    setBadge(channelKey, unseen.length);
+    if (msg.ts > lastSeen && msg.user !== currentUser) {
+      window._badgeCounts[channelKey] = (window._badgeCounts[channelKey] || 0) + 1;
+      setBadge(channelKey, window._badgeCounts[channelKey]);
+    }
   });
 }
 
@@ -524,6 +529,8 @@ function handleLogin() {
   lsSet("dl_username", u);
   lsSet("dl_password", p);
   currentPfp = lsGet("dl_pfp_" + u) || null;
+  // Also seed the profile cache with our own pfp immediately
+  if (currentPfp) profileCache[u] = currentPfp;
 
   document.getElementById("login-overlay").style.display = "none";
   applyUserToUI();
@@ -574,6 +581,7 @@ function saveSettings() {
     reader.onload = e => {
       lsSet("dl_pfp_" + currentUser, e.target.result);
       currentPfp = e.target.result;
+      saveProfilePfp(e.target.result);  // write to /profiles/<user>/pfp
       applySettings();
       closeSettings();
     };
@@ -802,6 +810,43 @@ function isMentionedInText(text) {
 }
 
 // ─────────────────────────────────────────────
+//  Profile PFP cache
+//  Fetches /profiles/<user> once per session, stores locally.
+//  This means PFP data is fetched once, not embedded in every message.
+// ─────────────────────────────────────────────
+const profileCache = {}; // username → pfp data URL or "none"
+
+function getProfilePfp(username) {
+  if (!username) return defaultPfp("?");
+  if (profileCache[username]) {
+    return profileCache[username] === "none"
+      ? defaultPfp(username.charAt(0).toUpperCase())
+      : profileCache[username];
+  }
+  // Return default immediately; update DOM img elements when loaded
+  if (profileCache[username] === undefined) {
+    profileCache[username] = "pending";
+    db.ref("profiles/" + username + "/pfp").once("value", snap => {
+      const val = snap.val();
+      profileCache[username] = val || "none";
+      // Update any already-rendered avatars for this user
+      document.querySelectorAll(`.message-pfp[data-user="${username}"]`).forEach(el => {
+        el.src = val ? val : defaultPfp(username.charAt(0).toUpperCase());
+      });
+    });
+  }
+  return defaultPfp(username.charAt(0).toUpperCase());
+}
+
+function saveProfilePfp(pfpDataUrl) {
+  if (!currentUser) return;
+  if (pfpDataUrl) {
+    db.ref("profiles/" + currentUser + "/pfp").set(pfpDataUrl);
+    profileCache[currentUser] = pfpDataUrl;
+  }
+}
+
+// ─────────────────────────────────────────────
 //  Message rendering
 // ─────────────────────────────────────────────
 function appendMessage(msg) {
@@ -815,7 +860,8 @@ function appendMessage(msg) {
 
   const pfp = document.createElement("img");
   pfp.className = "message-pfp";
-  pfp.src = msg.pfp || defaultPfp(msg.user.charAt(0).toUpperCase());
+  pfp.setAttribute("data-user", msg.user);
+  pfp.src = getProfilePfp(msg.user);
 
   const content = document.createElement("div");
   content.className = "message-content";
@@ -833,44 +879,76 @@ function appendMessage(msg) {
   }
 
   if (msg.type === "image") {
-    const img = document.createElement("img");
-    img.className = "message-image";
-    img.src = msg.data;
-    img.onclick = () => openImageModal(msg.data);
-    content.appendChild(img);
+    const local = mediaStore[msg.token];
+    if (local) {
+      const img = document.createElement("img");
+      img.className = "message-image";
+      img.src = local.url;
+      img.onclick = () => openImageModal(local.url);
+      content.appendChild(img);
+    } else {
+      // Sent from another session — we don't have the bytes
+      const note = document.createElement("span");
+      note.className = "message-text";
+      note.style.color = "#72767d";
+      note.textContent = "🖼️ " + (msg.filename || "image") + " (shared from another session)";
+      content.appendChild(note);
+    }
   }
 
   if (msg.type === "video") {
-    const wrap = document.createElement("div");
+    const local = mediaStore[msg.token];
+    const wrap  = document.createElement("div");
     wrap.className = "message-video-thumb-wrapper";
-    const thumb = document.createElement("img");
-    thumb.className = "message-video-thumb";
-    thumb.src = msg.thumbnail;
-    const play = document.createElement("div");
-    play.className = "message-video-play";
-    play.textContent = "▶";
-    wrap.appendChild(thumb);
-    wrap.appendChild(play);
-    wrap.onclick = () => openVideoModal(msg.data, msg.filename);
-    content.appendChild(wrap);
+    if (local && msg.thumbnail) {
+      const thumb = document.createElement("img");
+      thumb.className = "message-video-thumb";
+      thumb.src = msg.thumbnail;
+      const play = document.createElement("div");
+      play.className = "message-video-play";
+      play.textContent = "▶";
+      wrap.appendChild(thumb);
+      wrap.appendChild(play);
+      wrap.onclick = () => openVideoModal(local.url, msg.filename);
+      content.appendChild(wrap);
+    } else {
+      const note = document.createElement("span");
+      note.className = "message-text";
+      note.style.color = "#72767d";
+      note.textContent = "🎬 " + (msg.filename || "video") + " (shared from another session)";
+      content.appendChild(note);
+    }
   }
 
   if (msg.type === "file") {
-    const card = document.createElement("div");
+    const local = mediaStore[msg.token];
+    const card  = document.createElement("div");
     card.className = "message-file-card";
     const nameEl = document.createElement("div");
     nameEl.className = "message-file-name";
-    nameEl.textContent = "📄 " + msg.filename;
-    const sizeEl = document.createElement("div");
-    sizeEl.className = "message-file-size";
-    sizeEl.textContent = (msg.size / 1024).toFixed(1) + " KB";
-    const btn = document.createElement("button");
-    btn.className = "message-file-download";
-    btn.textContent = "Download";
-    btn.onclick = () => downloadBase64(msg.data, msg.filename);
+    nameEl.textContent = "📄 " + (msg.filename || "file");
     card.appendChild(nameEl);
-    card.appendChild(sizeEl);
-    card.appendChild(btn);
+    if (msg.size) {
+      const sizeEl = document.createElement("div");
+      sizeEl.className = "message-file-size";
+      sizeEl.textContent = (msg.size / 1024).toFixed(1) + " KB";
+      card.appendChild(sizeEl);
+    }
+    if (local) {
+      const btn = document.createElement("button");
+      btn.className = "message-file-download";
+      btn.textContent = "Download";
+      btn.onclick = () => {
+        const a = document.createElement("a");
+        a.href = local.url; a.download = msg.filename; a.click();
+      };
+      card.appendChild(btn);
+    } else {
+      const note = document.createElement("div");
+      note.style.cssText = "font-size:11px;color:#72767d;margin-top:2px;";
+      note.textContent = "Shared from another session";
+      card.appendChild(note);
+    }
     content.appendChild(card);
   }
 
@@ -882,17 +960,31 @@ function appendMessage(msg) {
 
 // ─────────────────────────────────────────────
 //  Load messages
+//
+//  BANDWIDTH FIX: use child_added instead of on("value").
+//  on("value") re-downloads the ENTIRE channel on every new message.
+//  child_added fires once per existing message on attach, then
+//  once per new message only — never re-downloads old ones.
 // ─────────────────────────────────────────────
+let currentChannelRef = null;
+
 function loadMessages(channel) {
   const messages = document.getElementById("messages");
   messages.innerHTML = "";
-  db.ref("messages/" + channel).off("value");
-  db.ref("messages/" + channel).on("value", snap => {
-    messages.innerHTML = "";
-    const data = snap.val();
-    if (!data) return;
-    Object.values(data).forEach(msg => appendMessage(msg));
+
+  if (currentChannelRef) {
+    currentChannelRef.off("child_added");
+    currentChannelRef = null;
+  }
+
+  const ref = db.ref("messages/" + channel).orderByChild("ts");
+  currentChannelRef = ref;
+
+  ref.on("child_added", snap => {
+    const msg = snap.val();
+    if (msg) appendMessage(msg);
   });
+
   markChannelRead(channel);
 }
 
@@ -905,7 +997,7 @@ function sendTextMessage() {
   if (!text) return;
   closeMentionDropdown();
   db.ref("messages/" + currentChannel).push({
-    user: currentUser, pfp: currentPfp || null,
+    user: currentUser,
     type: "text", text, ts: Date.now()
   });
   input.value = "";
@@ -1029,33 +1121,48 @@ document.getElementById("file-input").onchange = async e => {
   e.target.value = "";
 };
 
-async function handleFileUpload(file) {
-  const reader = new FileReader();
-  reader.onload = async e => {
-    const b64 = e.target.result;
-    if (file.type.startsWith("image/")) { sendImage(b64); return; }
-    if (file.type.startsWith("video/")) {
-      sendVideo(b64, file.name, await generateVideoThumbnail(file));
-      return;
-    }
-    sendFile(b64, file.name, file.size);
-  };
-  reader.readAsDataURL(file);
+// ── BANDWIDTH FIX: media/files are NEVER stored in Firebase ──────────────────
+// Base64 in the database was the primary cause of massive download costs.
+// Instead we keep a local mediaStore map: token → objectURL.
+// Only a lightweight stub (type, filename, size, token) goes to Firebase.
+// The actual bytes live in the sender's browser session only.
+// Recipients see a "file shared — ask sender for the file" notice if they
+// weren't in the same session. This is unavoidable without paid storage.
+const mediaStore = {}; // token → { url, filename }
+
+function makeToken() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-function sendImage(data) {
+async function handleFileUpload(file) {
+  const url   = URL.createObjectURL(file);
+  const token = makeToken();
+  mediaStore[token] = { url, filename: file.name };
+
+  if (file.type.startsWith("image/")) {
+    sendImage(token, file.name);
+  } else if (file.type.startsWith("video/")) {
+    const thumb = await generateVideoThumbnail(file);
+    sendVideo(token, file.name, thumb);
+  } else {
+    sendFile(token, file.name, file.size);
+  }
+}
+
+function sendImage(token, filename) {
   db.ref("messages/" + currentChannel).push({
-    user: currentUser, pfp: currentPfp || null, type: "image", data, ts: Date.now()
+    user: currentUser, type: "image", token, filename, ts: Date.now()
   });
 }
-function sendVideo(data, filename, thumbnail) {
+function sendVideo(token, filename, thumbnail) {
+  // thumbnail is a tiny 160x90 jpeg — keep it, it's small (~3 KB)
   db.ref("messages/" + currentChannel).push({
-    user: currentUser, pfp: currentPfp || null, type: "video", data, filename, thumbnail, ts: Date.now()
+    user: currentUser, type: "video", token, filename, thumbnail, ts: Date.now()
   });
 }
-function sendFile(data, filename, size) {
+function sendFile(token, filename, size) {
   db.ref("messages/" + currentChannel).push({
-    user: currentUser, pfp: currentPfp || null, type: "file", data, filename, size, ts: Date.now()
+    user: currentUser, type: "file", token, filename, size, ts: Date.now()
   });
 }
 
