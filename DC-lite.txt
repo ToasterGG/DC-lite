@@ -774,15 +774,21 @@ function adminViewId() {
   });
 }
 
-// Wire admin panel buttons
-document.getElementById("admin-close").onclick       = closeAdminPanel;
-document.getElementById("admin-delete-msg").onclick  = adminDeleteMessage;
-document.getElementById("admin-delete-all-msgs").onclick = adminDeleteAllMessages;
-document.getElementById("admin-delete-user").onclick = adminDeleteUser;
-document.getElementById("admin-block-device").onclick = adminBlockDevice;
-document.getElementById("admin-mute-user").onclick   = adminMuteUser;
-document.getElementById("admin-broadcast").onclick   = adminBroadcast;
-document.getElementById("admin-view-id").onclick     = adminViewId;
+// Wire admin panel buttons — deferred so DOM is guaranteed present
+function wireAdminButtons() {
+  function on(id, fn) {
+    const el = document.getElementById(id);
+    if (el) el.onclick = fn;
+  }
+  on("admin-close",           closeAdminPanel);
+  on("admin-delete-msg",      adminDeleteMessage);
+  on("admin-delete-all-msgs", adminDeleteAllMessages);
+  on("admin-delete-user",     adminDeleteUser);
+  on("admin-block-device",    adminBlockDevice);
+  on("admin-mute-user",       adminMuteUser);
+  on("admin-broadcast",       adminBroadcast);
+  on("admin-view-id",         adminViewId);
+}
 
 // ─────────────────────────────────────────────
 //  Friends persistence  (per-user)
@@ -1699,36 +1705,59 @@ document.getElementById("add-friend-input").onkeydown = e => {
 };
 
 // ─────────────────────────────────────────────
-//  Init
+//  Init — runs after DOM is fully available
 // ─────────────────────────────────────────────
-initUser();
-applySettings();
-loadMessages("general");
+function safeOn(id, fn) {
+  const el = document.getElementById(id);
+  if (el) el.onclick = fn;
+  else console.warn("Element not found:", id);
+}
 
-document.getElementById("login-button").onclick = handleLogin;
+function init() {
+  wireAdminButtons();
 
-document.getElementById("settings-id-copy").onclick = () => {
-  if (!currentUserId) return;
-  navigator.clipboard.writeText(currentUserId).then(() => {
-    const btn = document.getElementById("settings-id-copy");
-    const orig = btn.textContent;
-    btn.textContent = "Copied!";
-    setTimeout(() => { btn.textContent = orig; }, 1500);
-  }).catch(() => {
-    // Fallback for browsers that block clipboard
-    const el = document.getElementById("settings-id-display");
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
+  safeOn("login-button",    handleLogin);
+  safeOn("send-button",     sendTextMessage);
+  safeOn("settings-icon",   openSettings);
+  safeOn("settings-close",  closeSettings);
+  safeOn("settings-save",   saveSettings);
+
+  safeOn("settings-id-copy", () => {
+    if (!currentUserId) return;
+    navigator.clipboard.writeText(currentUserId).then(() => {
+      const btn = document.getElementById("settings-id-copy");
+      if (!btn) return;
+      const orig = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    }).catch(() => {
+      const el = document.getElementById("settings-id-display");
+      if (!el) return;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    });
   });
-};
-document.getElementById("login-username").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
-document.getElementById("login-password").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
-document.getElementById("send-button").onclick = sendTextMessage;
-document.getElementById("settings-icon").onclick = openSettings;
-document.getElementById("settings-close").onclick   = closeSettings;
-document.getElementById("settings-save").onclick    = saveSettings;
+
+  const loginU = document.getElementById("login-username");
+  const loginP = document.getElementById("login-password");
+  if (loginU) loginU.onkeydown = e => { if (e.key === "Enter") handleLogin(); };
+  if (loginP) loginP.onkeydown = e => { if (e.key === "Enter") handleLogin(); };
+
+  initUser();
+  applySettings();
+  // Don't load messages yet — wait until user logs in
+}
+
+// document.write() (used by the bookmarklet) fires readyState=interactive
+// before scripts run, so DOMContentLoaded may have already fired.
+// Using setTimeout(0) guarantees we run after the current parse tick.
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  setTimeout(init, 0);
+}
   </script>
 </body>
 </html>
