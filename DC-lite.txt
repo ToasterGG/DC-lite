@@ -724,8 +724,8 @@ function adminDeleteUser() {
 function adminBlockDevice() {
   const fp = adminTarget.deviceFp;
   if (!fp) {
-    alert("No device fingerprint available for this user yet.
-They must have logged in at least once for a fingerprint to be recorded.");
+    alert("No device fingerprint available for this user yet.\nThey must have logged in at least once for a fingerprint to be recorded.");
+
     return;
   }
   if (!confirm("Block device " + fp + "? This prevents them logging in from this device.")) return;
@@ -770,8 +770,7 @@ function adminBroadcast() {
 function adminViewId() {
   if (!adminTarget.user) return;
   fetchUserId(adminTarget.user, id => {
-    alert("Account ID for " + adminTarget.user + ":
-" + id);
+    alert("Account ID for " + adminTarget.user + ":\n" + id);
   });
 }
 
