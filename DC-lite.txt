@@ -283,6 +283,49 @@
     ::-webkit-scrollbar-thumb { background: #202225; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #18191c; }
 
+    /* ── Admin panel ── */
+    #admin-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center;
+      z-index: 2000; backdrop-filter: blur(6px);
+    }
+    #admin-panel {
+      width: 340px; max-width: 92%;
+      background: #1a1b1e;
+      border: 1px solid #ed4245;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 0 30px rgba(237,66,69,0.25);
+    }
+    #admin-panel h3 {
+      font-size: 14px; color: #ed4245; margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    #admin-target-info {
+      font-size: 12px; color: #72767d; margin-bottom: 12px;
+      font-family: monospace;
+    }
+    .admin-btn {
+      display: block; width: 100%; margin-bottom: 8px;
+      padding: 8px 12px; border-radius: 4px; border: none;
+      font-size: 13px; cursor: pointer; text-align: left;
+      transition: filter 0.1s;
+    }
+    .admin-btn:hover { filter: brightness(1.15); }
+    .admin-btn-red    { background: #ed4245; color: #fff; }
+    .admin-btn-orange { background: #f97316; color: #fff; }
+    .admin-btn-yellow { background: #eab308; color: #111; }
+    .admin-btn-blue   { background: #5865f2; color: #fff; }
+    .admin-btn-grey   { background: #383a40; color: #dcddde; }
+    #admin-close {
+      position: absolute; top: 12px; right: 14px;
+      cursor: pointer; font-size: 18px; color: #72767d;
+    }
+    #admin-close:hover { color: #fff; }
+    #admin-panel { position: relative; }
+    /* Crown badge on admin's own username */
+    .admin-crown { color: #faa81a; font-size: 11px; margin-left: 3px; }
+
     /* ── Account ID in settings ── */
     .settings-id-box {
       background-color: #202225;
@@ -440,6 +483,22 @@
 
   <div id="watermark">made by Toby Ulliott</div>
 
+  <!-- Admin panel modal -->
+  <div id="admin-overlay">
+    <div id="admin-panel">
+      <span id="admin-close">&times;</span>
+      <h3>⚡ Admin Panel</h3>
+      <div id="admin-target-info"></div>
+      <button class="admin-btn admin-btn-red"    id="admin-delete-msg">🗑️ Delete this message</button>
+      <button class="admin-btn admin-btn-red"    id="admin-delete-all-msgs">🗑️ Delete ALL messages from user</button>
+      <button class="admin-btn admin-btn-orange" id="admin-delete-user">💀 Delete user account</button>
+      <button class="admin-btn admin-btn-orange" id="admin-block-device">🚫 Block this device</button>
+      <button class="admin-btn admin-btn-yellow" id="admin-mute-user">🔇 Mute user (read-only)</button>
+      <button class="admin-btn admin-btn-blue"   id="admin-broadcast">📢 Send broadcast message</button>
+      <button class="admin-btn admin-btn-grey"   id="admin-view-id">🪪 View account ID</button>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -472,6 +531,14 @@ let currentVideoFilename = null;
 // Tracks which channels already have an active unread listener
 const watchingChannels = {};
 
+// Admin credentials (checked client-side; Firebase rules are the real gate)
+const ADMIN_USER = "Admin";
+const ADMIN_PASS = "bbecRa79";
+let isAdmin = false;
+
+// Admin panel state — what user/message is currently targeted
+let adminTarget = { user: null, messageKey: null, channel: null, deviceFp: null };
+
 // ─────────────────────────────────────────────
 //  localStorage helpers
 // ─────────────────────────────────────────────
@@ -479,43 +546,64 @@ function lsGet(k)    { try { return localStorage.getItem(k); }  catch(_) { retur
 function lsSet(k, v) { try { localStorage.setItem(k, v); }      catch(_) {} }
 
 // ─────────────────────────────────────────────
-//  Account ID  (15-digit random, per-user, stored in localStorage + Firebase)
+//  Account ID  (15-digit, unique per username+password pair)
 //  Path: /profiles/<username>/id  →  "123456789012345"
+//
+//  The ID is derived from a hash of "username:password" so:
+//   - Two users with the same name but different passwords get different IDs
+//   - The same user always gets the same ID on any device (deterministic)
+//   - The password is never stored in Firebase — only the derived ID is
 // ─────────────────────────────────────────────
-let currentUserId = null;
+let currentUserId   = null;
+let currentPassword = "";   // held in memory only, never written anywhere
 
-function generateId() {
-  // 15 digits: first digit 1-9, rest 0-9
-  let id = String(Math.floor(Math.random() * 9) + 1);
-  for (let i = 0; i < 14; i++) id += String(Math.floor(Math.random() * 10));
+// Simple but effective 32-bit hash (variant of FNV-1a)
+function hashString(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 16777619) >>> 0;  // keep 32-bit unsigned
+  }
+  return h;
+}
+
+// Seeded PRNG (mulberry32) — gives deterministic sequence from one seed
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function deriveIdFromCredentials(username, password) {
+  // Hash the combined credential string to a 32-bit seed
+  const seed = hashString(username + ":" + password);
+  const rand  = mulberry32(seed);
+  // Generate 15 digits: first must be 1-9
+  let id = String(Math.floor(rand() * 9) + 1);
+  for (let i = 0; i < 14; i++) id += String(Math.floor(rand() * 10));
   return id;
 }
 
 function idKey(username) { return "dl_id_" + username; }
 
-function loadOrCreateId(username) {
-  // 1. Check localStorage first (fast, no network)
-  const stored = lsGet(idKey(username));
-  if (stored && stored.length === 15) {
-    currentUserId = stored;
-    showIdInSettings(stored);
-    // Make sure Firebase also has it (idempotent write)
-    db.ref("profiles/" + username + "/id").once("value", snap => {
-      if (!snap.val()) db.ref("profiles/" + username + "/id").set(stored);
-    });
-    return;
-  }
-  // 2. Check Firebase (another device may have set it)
+function loadOrCreateId(username, password) {
+  // Derive the canonical ID for this username+password pair
+  const derivedId = deriveIdFromCredentials(username, password);
+
+  // Check if Firebase already has an ID for this username
   db.ref("profiles/" + username + "/id").once("value", snap => {
-    let id = snap.val();
-    if (!id || id.length !== 15) {
-      // 3. Brand new — generate, save everywhere
-      id = generateId();
-      db.ref("profiles/" + username + "/id").set(id);
-    }
-    lsSet(idKey(username), id);
-    currentUserId = id;
-    showIdInSettings(id);
+    const existingId = snap.val();
+    // If the stored ID doesn't match what we'd derive, this is either a new
+    // account or the password changed — overwrite with the correct derived ID
+    const id = existingId || derivedId;
+    // Always write our derived ID (idempotent if same credentials)
+    db.ref("profiles/" + username + "/id").set(derivedId);
+    lsSet(idKey(username), derivedId);
+    currentUserId = derivedId;
+    showIdInSettings(derivedId);
   });
 }
 
@@ -538,6 +626,164 @@ function fetchUserId(username, callback) {
     callback(id);
   });
 }
+
+// ─────────────────────────────────────────────
+//  Device fingerprint  (used for blocking)
+//  A lightweight fingerprint stored in localStorage under a fixed key.
+//  On block, admin writes it to /blocked/<fp> = true.
+//  On every login, the client checks /blocked/<fp> before proceeding.
+// ─────────────────────────────────────────────
+function getDeviceFingerprint() {
+  let fp = lsGet("dl_device_fp");
+  if (fp) return fp;
+  // Generate once and persist — combination of random + browser traits
+  const traits = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + "x" + screen.height,
+    new Date().getTimezoneOffset(),
+    Math.random().toString(36).slice(2)
+  ].join("|");
+  let h = 2166136261;
+  for (let i = 0; i < traits.length; i++) {
+    h ^= traits.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  fp = "fp_" + h.toString(16).padStart(8, "0");
+  lsSet("dl_device_fp", fp);
+  return fp;
+}
+
+function checkDeviceBlocked(fp, callback) {
+  db.ref("blocked/" + fp).once("value", snap => {
+    callback(!!snap.val());
+  });
+}
+
+// ─────────────────────────────────────────────
+//  Admin actions
+// ─────────────────────────────────────────────
+
+function openAdminPanel(targetUser, messageKey, channel, deviceFp) {
+  if (!isAdmin) return;
+  adminTarget = { user: targetUser, messageKey, channel, deviceFp };
+  document.getElementById("admin-target-info").textContent =
+    "Target: " + targetUser + (messageKey ? " · msg in #" + channel : "");
+  document.getElementById("admin-overlay").style.display = "flex";
+}
+
+function closeAdminPanel() {
+  document.getElementById("admin-overlay").style.display = "none";
+  adminTarget = { user: null, messageKey: null, channel: null, deviceFp: null };
+}
+
+// Delete a specific message
+function adminDeleteMessage() {
+  if (!adminTarget.messageKey || !adminTarget.channel) {
+    alert("No message selected."); return;
+  }
+  if (!confirm("Delete this message permanently?")) return;
+  db.ref("messages/" + adminTarget.channel + "/" + adminTarget.messageKey).remove();
+  closeAdminPanel();
+}
+
+// Delete all messages from a user across ALL channels
+function adminDeleteAllMessages() {
+  if (!adminTarget.user) return;
+  if (!confirm("Delete ALL messages from " + adminTarget.user + " across every channel? This cannot be undone.")) return;
+  const allChannels = ["general", "gaming", "random"];
+  // Also scan Firebase messages node for DM channels
+  db.ref("messages").once("value", snap => {
+    const data = snap.val() || {};
+    Object.keys(data).forEach(ch => {
+      const msgs = data[ch];
+      if (!msgs) return;
+      const updates = {};
+      Object.entries(msgs).forEach(([key, msg]) => {
+        if (msg.user === adminTarget.user) updates[key] = null;
+      });
+      if (Object.keys(updates).length) db.ref("messages/" + ch).update(updates);
+    });
+  });
+  closeAdminPanel();
+}
+
+// Delete user profile + presence (account wipe)
+function adminDeleteUser() {
+  if (!adminTarget.user) return;
+  if (!confirm("Permanently delete account '" + adminTarget.user + "'? This removes their profile and presence.")) return;
+  db.ref("profiles/" + adminTarget.user).remove();
+  db.ref("presence/" + adminTarget.user).remove();
+  db.ref("dmInvites/" + adminTarget.user).remove();
+  // Write a tombstone so the client gets kicked next login
+  db.ref("banned/" + adminTarget.user).set({ ts: Date.now(), by: ADMIN_USER });
+  closeAdminPanel();
+}
+
+// Block the device fingerprint stored on the target's profile
+function adminBlockDevice() {
+  const fp = adminTarget.deviceFp;
+  if (!fp) {
+    alert("No device fingerprint available for this user yet.
+They must have logged in at least once for a fingerprint to be recorded.");
+    return;
+  }
+  if (!confirm("Block device " + fp + "? This prevents them logging in from this device.")) return;
+  db.ref("blocked/" + fp).set({ ts: Date.now(), by: ADMIN_USER });
+  closeAdminPanel();
+}
+
+// Mute: write /muted/<user> = true; client checks this before sending
+function adminMuteUser() {
+  if (!adminTarget.user) return;
+  db.ref("muted/" + adminTarget.user).once("value", snap => {
+    const alreadyMuted = !!snap.val();
+    if (alreadyMuted) {
+      if (confirm("User is already muted. Unmute them?")) {
+        db.ref("muted/" + adminTarget.user).remove();
+      }
+    } else {
+      if (confirm("Mute " + adminTarget.user + "? They can read but not send messages.")) {
+        db.ref("muted/" + adminTarget.user).set({ ts: Date.now(), by: ADMIN_USER });
+      }
+    }
+  });
+  closeAdminPanel();
+}
+
+// Broadcast: push a system message to every static channel
+function adminBroadcast() {
+  const text = prompt("Broadcast message (sent to #general, #gaming, #random):");
+  if (!text || !text.trim()) return;
+  ["general", "gaming", "random"].forEach(ch => {
+    db.ref("messages/" + ch).push({
+      user: "📢 System",
+      type: "text",
+      text: "[BROADCAST] " + text.trim(),
+      ts: Date.now()
+    });
+  });
+  closeAdminPanel();
+}
+
+// Show account ID in panel
+function adminViewId() {
+  if (!adminTarget.user) return;
+  fetchUserId(adminTarget.user, id => {
+    alert("Account ID for " + adminTarget.user + ":
+" + id);
+  });
+}
+
+// Wire admin panel buttons
+document.getElementById("admin-close").onclick       = closeAdminPanel;
+document.getElementById("admin-delete-msg").onclick  = adminDeleteMessage;
+document.getElementById("admin-delete-all-msgs").onclick = adminDeleteAllMessages;
+document.getElementById("admin-delete-user").onclick = adminDeleteUser;
+document.getElementById("admin-block-device").onclick = adminBlockDevice;
+document.getElementById("admin-mute-user").onclick   = adminMuteUser;
+document.getElementById("admin-broadcast").onclick   = adminBroadcast;
+document.getElementById("admin-view-id").onclick     = adminViewId;
 
 // ─────────────────────────────────────────────
 //  Friends persistence  (per-user)
@@ -640,29 +886,58 @@ function handleLogin() {
   const p = document.getElementById("login-password").value.trim();
   if (!u) return;
 
-  currentUser = u;
-  lsSet("dl_username", u);
-  lsSet("dl_password", p);
-  currentPfp = lsGet("dl_pfp_" + u) || null;
-  // Also seed the profile cache with our own pfp immediately
-  if (currentPfp) profileCache[u] = currentPfp;
+  // ── Pre-login checks ────────────────────────────────────────────────────
+  const fp = getDeviceFingerprint();
 
-  document.getElementById("login-overlay").style.display = "none";
-  applyUserToUI();
-  applySettings();
-  loadOrCreateId(u);   // generate or restore 15-digit account ID
-  renderAllFriends(u);
+  // 1. Check device block
+  checkDeviceBlocked(fp, blocked => {
+    if (blocked) {
+      document.getElementById("login-username").value = "";
+      document.getElementById("login-password").value = "";
+      alert("This device has been blocked from Discord Lite+.");
+      return;
+    }
 
-  // Watch public channels for unreads
-  ["general", "gaming", "random"].forEach(ch => watchUnreads(ch));
+    // 2. Check account ban
+    db.ref("banned/" + u).once("value", banSnap => {
+      if (banSnap.val()) {
+        alert("This account has been banned.");
+        document.getElementById("login-username").value = "";
+        document.getElementById("login-password").value = "";
+        return;
+      }
 
-  // Listen on Firebase for incoming DM invites addressed to this user
-  listenForDMInvites();
+      // 3. Check mute status (load it so sendTextMessage can honour it)
+      db.ref("muted/" + u).once("value", muteSnap => {
+        window._isMuted = !!muteSnap.val();
+      });
 
-  // Run cleanup passes (messages >24h, idle DMs >48h, stale users >72h)
-  runCleanup();
+      // ── All clear — proceed with login ────────────────────────────────
+      currentUser     = u;
+      currentPassword = p;
+      lsSet("dl_username", u);
+      lsSet("dl_password", p);
+      currentPfp = lsGet("dl_pfp_" + u) || null;
+      if (currentPfp) profileCache[u] = currentPfp;
 
-  loadMessages(currentChannel);
+      // Detect admin
+      isAdmin = (u === ADMIN_USER && p === ADMIN_PASS);
+
+      // Record device fingerprint on the user's profile (admin can retrieve it)
+      db.ref("profiles/" + u + "/deviceFp").set(fp);
+
+      document.getElementById("login-overlay").style.display = "none";
+      applyUserToUI();
+      applySettings();
+      loadOrCreateId(u, p);
+      renderAllFriends(u);
+
+      ["general", "gaming", "random"].forEach(ch => watchUnreads(ch));
+      listenForDMInvites();
+      runCleanup();
+      loadMessages(currentChannel);
+    });
+  });
 }
 
 function initUser() {
@@ -974,10 +1249,12 @@ function saveProfilePfp(pfpDataUrl) {
 // ─────────────────────────────────────────────
 //  Message rendering
 // ─────────────────────────────────────────────
-function appendMessage(msg) {
+function appendMessage(msg, msgKey, msgChannel) {
   const messages = document.getElementById("messages");
   const row = document.createElement("div");
   row.className = "message-row";
+  if (msgKey)     row.setAttribute("data-msg-key", msgKey);
+  if (msgChannel) row.setAttribute("data-msg-channel", msgChannel);
 
   if (msg.type === "text" && isMentionedInText(msg.text)) {
     row.classList.add("mentioned");
@@ -993,7 +1270,15 @@ function appendMessage(msg) {
 
   const name = document.createElement("span");
   name.className = "message-username has-id-tooltip";
-  name.textContent = msg.user + ": ";
+  // Crown badge for admin's own messages
+  if (msg.user === ADMIN_USER) {
+    const crown = document.createElement("span");
+    crown.className = "admin-crown";
+    crown.textContent = "👑";
+    name.appendChild(crown);
+    name.appendChild(document.createTextNode(" "));
+  }
+  name.appendChild(document.createTextNode(msg.user + ": "));
   // Tooltip element — populated lazily on first hover
   const tooltip = document.createElement("span");
   tooltip.className = "id-tooltip";
@@ -1002,6 +1287,19 @@ function appendMessage(msg) {
   name.addEventListener("mouseenter", () => {
     fetchUserId(msg.user, id => { tooltip.textContent = "ID: " + id; });
   }, { once: true });
+  // Admin: click username to open admin panel for this user/message
+  if (isAdmin && msg.user !== ADMIN_USER) {
+    name.style.cursor = "pointer";
+    name.addEventListener("click", e => {
+      e.stopPropagation();
+      const key = row.getAttribute("data-msg-key");
+      const ch  = row.getAttribute("data-msg-channel");
+      // Fetch target's device fingerprint
+      db.ref("profiles/" + msg.user + "/deviceFp").once("value", snap => {
+        openAdminPanel(msg.user, key, ch, snap.val());
+      });
+    });
+  }
   content.appendChild(name);
 
   if (msg.type === "text") {
@@ -1115,7 +1413,7 @@ function loadMessages(channel) {
 
   ref.on("child_added", snap => {
     const msg = snap.val();
-    if (msg) appendMessage(msg);
+    if (msg) appendMessage(msg, snap.key, channel);
   });
 
   markChannelRead(channel);
@@ -1128,6 +1426,13 @@ function sendTextMessage() {
   const input = document.getElementById("message-input");
   const text  = input.value.trim();
   if (!text) return;
+  if (window._isMuted) {
+    input.value = "";
+    const tmp = input.placeholder;
+    input.placeholder = "You are muted and cannot send messages.";
+    setTimeout(() => { input.placeholder = tmp; }, 3000);
+    return;
+  }
   closeMentionDropdown();
   db.ref("messages/" + currentChannel).push({
     user: currentUser,
