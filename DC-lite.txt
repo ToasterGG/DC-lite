@@ -282,6 +282,55 @@
     ::-webkit-scrollbar-track { background: #2b2d31; }
     ::-webkit-scrollbar-thumb { background: #202225; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #18191c; }
+
+    /* ── Account ID in settings ── */
+    .settings-id-box {
+      background-color: #202225;
+      border-radius: 3px;
+      padding: 6px 8px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #b9bbbe;
+      letter-spacing: 1px;
+      user-select: all;
+      cursor: text;
+      word-break: break-all;
+    }
+    .settings-id-copy {
+      margin-top: 4px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      border: none;
+      background-color: #383a40;
+      color: #b9bbbe;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .settings-id-copy:hover { background-color: #404249; color: #fff; }
+
+    /* ── Username hover tooltip (shows ID) ── */
+    .has-id-tooltip {
+      position: relative;
+      cursor: default;
+    }
+    .has-id-tooltip .id-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 0;
+      background-color: #111214;
+      color: #b9bbbe;
+      font-size: 10px;
+      font-family: monospace;
+      padding: 3px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      z-index: 999;
+      pointer-events: none;
+      border: 1px solid #2b2d31;
+      letter-spacing: 0.5px;
+    }
+    .has-id-tooltip:hover .id-tooltip { display: block; }
   </style>
 </head>
 <body>
@@ -369,6 +418,11 @@
           <option value="off">DMs Off</option>
         </select>
       </div>
+      <div class="settings-section" id="settings-id-section" style="display:none;">
+        <label>Account ID</label>
+        <div class="settings-id-box" id="settings-id-display"></div>
+        <button class="settings-id-copy" id="settings-id-copy">Copy ID</button>
+      </div>
       <button id="settings-save">Save</button>
     </div>
   </div>
@@ -423,6 +477,67 @@ const watchingChannels = {};
 // ─────────────────────────────────────────────
 function lsGet(k)    { try { return localStorage.getItem(k); }  catch(_) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); }      catch(_) {} }
+
+// ─────────────────────────────────────────────
+//  Account ID  (15-digit random, per-user, stored in localStorage + Firebase)
+//  Path: /profiles/<username>/id  →  "123456789012345"
+// ─────────────────────────────────────────────
+let currentUserId = null;
+
+function generateId() {
+  // 15 digits: first digit 1-9, rest 0-9
+  let id = String(Math.floor(Math.random() * 9) + 1);
+  for (let i = 0; i < 14; i++) id += String(Math.floor(Math.random() * 10));
+  return id;
+}
+
+function idKey(username) { return "dl_id_" + username; }
+
+function loadOrCreateId(username) {
+  // 1. Check localStorage first (fast, no network)
+  const stored = lsGet(idKey(username));
+  if (stored && stored.length === 15) {
+    currentUserId = stored;
+    showIdInSettings(stored);
+    // Make sure Firebase also has it (idempotent write)
+    db.ref("profiles/" + username + "/id").once("value", snap => {
+      if (!snap.val()) db.ref("profiles/" + username + "/id").set(stored);
+    });
+    return;
+  }
+  // 2. Check Firebase (another device may have set it)
+  db.ref("profiles/" + username + "/id").once("value", snap => {
+    let id = snap.val();
+    if (!id || id.length !== 15) {
+      // 3. Brand new — generate, save everywhere
+      id = generateId();
+      db.ref("profiles/" + username + "/id").set(id);
+    }
+    lsSet(idKey(username), id);
+    currentUserId = id;
+    showIdInSettings(id);
+  });
+}
+
+function showIdInSettings(id) {
+  const section = document.getElementById("settings-id-section");
+  const display = document.getElementById("settings-id-display");
+  if (!section || !display) return;
+  section.style.display = "block";
+  display.textContent = id;
+}
+
+// ── ID cache for other users (fetched on demand for tooltips) ──
+const userIdCache = {}; // username → id string
+
+function fetchUserId(username, callback) {
+  if (userIdCache[username]) { callback(userIdCache[username]); return; }
+  db.ref("profiles/" + username + "/id").once("value", snap => {
+    const id = snap.val() || "ID unavailable";
+    userIdCache[username] = id;
+    callback(id);
+  });
+}
 
 // ─────────────────────────────────────────────
 //  Friends persistence  (per-user)
@@ -535,6 +650,7 @@ function handleLogin() {
   document.getElementById("login-overlay").style.display = "none";
   applyUserToUI();
   applySettings();
+  loadOrCreateId(u);   // generate or restore 15-digit account ID
   renderAllFriends(u);
 
   // Watch public channels for unreads
@@ -731,8 +847,17 @@ function renderFriendEntry(name) {
   div.setAttribute("data-friend-name", name);
 
   const label = document.createElement("span");
-  label.className = "friend-label";
+  label.className = "friend-label has-id-tooltip";
+  label.style.position = "relative";
   label.textContent = name;
+  // Tooltip for friend sidebar entry
+  const friendTooltip = document.createElement("span");
+  friendTooltip.className = "id-tooltip";
+  friendTooltip.textContent = "loading…";
+  label.appendChild(friendTooltip);
+  label.addEventListener("mouseenter", () => {
+    fetchUserId(name, id => { friendTooltip.textContent = "ID: " + id; });
+  }, { once: true });
 
   const del = document.createElement("button");
   del.className = "friend-delete";
@@ -867,8 +992,16 @@ function appendMessage(msg) {
   content.className = "message-content";
 
   const name = document.createElement("span");
-  name.className = "message-username";
+  name.className = "message-username has-id-tooltip";
   name.textContent = msg.user + ": ";
+  // Tooltip element — populated lazily on first hover
+  const tooltip = document.createElement("span");
+  tooltip.className = "id-tooltip";
+  tooltip.textContent = "loading…";
+  name.appendChild(tooltip);
+  name.addEventListener("mouseenter", () => {
+    fetchUserId(msg.user, id => { tooltip.textContent = "ID: " + id; });
+  }, { once: true });
   content.appendChild(name);
 
   if (msg.type === "text") {
@@ -1269,6 +1402,23 @@ applySettings();
 loadMessages("general");
 
 document.getElementById("login-button").onclick = handleLogin;
+
+document.getElementById("settings-id-copy").onclick = () => {
+  if (!currentUserId) return;
+  navigator.clipboard.writeText(currentUserId).then(() => {
+    const btn = document.getElementById("settings-id-copy");
+    const orig = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  }).catch(() => {
+    // Fallback for browsers that block clipboard
+    const el = document.getElementById("settings-id-display");
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+};
 document.getElementById("login-username").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
 document.getElementById("login-password").onkeydown = e => { if (e.key === "Enter") handleLogin(); };
 document.getElementById("send-button").onclick = sendTextMessage;
