@@ -326,105 +326,80 @@
     /* Crown badge on admin's own username */
     .admin-crown { color: #faa81a; font-size: 11px; margin-left: 3px; }
 
-    /* ── Admin side panel ── */
+    /* ── Admin side panel — lives inside the left sidebar ── */
     #admin-side-panel {
-      width: 0;
-      min-width: 0;
-      overflow: hidden;
-      background: #111214;
-      border-left: 0px solid #ed4245;
-      display: flex;
+      display: none;           /* hidden for non-admins */
       flex-direction: column;
-      transition: width 0.22s ease, border-width 0.22s ease;
-      z-index: 100;
+      border-top: 1px solid #ed424540;
+      margin-top: 4px;
+      padding-top: 6px;
+      overflow: hidden;
       flex-shrink: 0;
     }
-    #admin-side-panel.open {
-      width: 230px;
-      min-width: 230px;
-      border-left-width: 2px;
-    }
+    #admin-side-panel.open { display: flex; }
     #admin-side-panel-inner {
-      width: 230px;
-      padding: 12px 10px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       overflow-y: auto;
-      height: 100%;
+      max-height: 340px;   /* scroll if buttons overflow */
+      padding: 0 2px 4px 2px;
     }
     #admin-side-title {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #ed4245;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+      padding: 0 4px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
     #admin-side-close {
       cursor: pointer;
-      font-size: 16px;
+      font-size: 14px;
       color: #72767d;
-      line-height: 1;
     }
     #admin-side-close:hover { color: #fff; }
     .asb {
-      display: flex;
-      align-items: center;
-      gap: 7px;
+      display: block;
       width: 100%;
-      padding: 7px 10px;
-      border-radius: 5px;
+      padding: 5px 8px;
+      border-radius: 4px;
       border: none;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       text-align: left;
-      transition: filter 0.1s, transform 0.08s;
+      transition: filter 0.1s;
       color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .asb:hover { filter: brightness(1.18); transform: translateX(2px); }
-    .asb:active { transform: translateX(0); filter: brightness(0.9); }
+    .asb:hover { filter: brightness(1.2); }
     .asb-red    { background: #ed4245; }
     .asb-orange { background: #f97316; }
-    .asb-yellow { background: #ca8a04; color: #fff; }
+    .asb-yellow { background: #ca8a04; }
     .asb-green  { background: #22c55e; }
     .asb-blue   { background: #5865f2; }
     .asb-purple { background: #a855f7; }
-    .asb-grey   { background: #383a40; }
-    .asb-dark   { background: #1a1b1e; border: 1px solid #ed4245; color: #ed4245; }
+    .asb-grey   { background: #2e3035; }
+    .asb-dark   { background: transparent; border: 1px solid #ed4245; color: #ed4245; }
     .admin-divider {
       height: 1px;
-      background: #2b2d31;
-      margin: 4px 0;
+      background: #ffffff10;
+      margin: 2px 0;
     }
     .admin-section-label {
-      font-size: 10px;
+      font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       color: #72767d;
-      padding: 2px 4px;
+      padding: 2px 4px 0;
     }
-    #admin-toggle-btn {
-      position: fixed;
-      top: 8px;
-      right: 8px;
-      z-index: 200;
-      background: #ed4245;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      padding: 5px 10px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      display: none;
-      letter-spacing: 0.5px;
-    }
-    #admin-toggle-btn:hover { background: #c23b3e; }
 
     /* ── Account ID in settings ── */
     .settings-id-box {
@@ -503,6 +478,41 @@
         </div>
       </div>
 
+      <!-- Admin console — injected here, only shown for Admin account -->
+      <div id="admin-side-panel">
+        <div id="admin-side-panel-inner">
+          <div id="admin-side-title">
+            <span>⚡ Admin Console</span>
+            <span id="admin-side-close">✕</span>
+          </div>
+
+          <div class="admin-section-label">🗄️ Storage</div>
+          <button class="asb asb-dark"   id="asb-nuke">💣 Nuke ALL (keep Admin)</button>
+          <button class="asb asb-red"    id="asb-del-all-msgs">🗑️ Delete all messages</button>
+          <button class="asb asb-red"    id="asb-del-old">⏳ Delete msgs &gt;1h old</button>
+          <button class="asb asb-orange" id="asb-del-profiles">👤 Delete user profiles</button>
+          <button class="asb asb-orange" id="asb-del-presence">🫥 Delete presence data</button>
+
+          <div class="admin-divider"></div>
+          <div class="admin-section-label">👥 Users</div>
+          <button class="asb asb-blue"   id="asb-list-users">📋 List all users</button>
+          <button class="asb asb-purple" id="asb-reset-id">🔄 Reset a user's ID</button>
+          <button class="asb asb-yellow" id="asb-unban-user">✅ Unban a user</button>
+          <button class="asb asb-yellow" id="asb-unmute-user">🔊 Unmute a user</button>
+          <button class="asb asb-green"  id="asb-unblock-device">🔓 Unblock device FP</button>
+
+          <div class="admin-divider"></div>
+          <div class="admin-section-label">📢 Broadcast</div>
+          <button class="asb asb-blue"   id="asb-broadcast">📣 Send broadcast</button>
+          <button class="asb asb-grey"   id="asb-announce">📌 Pin announcement</button>
+
+          <div class="admin-divider"></div>
+          <div class="admin-section-label">🔧 Maintenance</div>
+          <button class="asb asb-grey"   id="asb-run-cleanup">🧹 Run cleanup now</button>
+          <button class="asb asb-grey"   id="asb-firebase-stats">📊 DB node counts</button>
+        </div>
+      </div>
+
       <div id="user-bar">
         <img id="user-pfp" src="" alt="PFP">
         <div id="user-name">User</div>
@@ -521,43 +531,7 @@
       </div>
     </div>
 
-    <!-- Admin side panel — only visible when isAdmin -->
-    <div id="admin-side-panel">
-      <div id="admin-side-panel-inner">
-        <div id="admin-side-title">
-          <span>⚡ Admin Console</span>
-          <span id="admin-side-close">✕</span>
-        </div>
-
-        <div class="admin-section-label">🗄️ Storage</div>
-        <button class="asb asb-dark"   id="asb-nuke">💣 Nuke ALL storage (keep Admin)</button>
-        <button class="asb asb-red"    id="asb-del-all-msgs">🗑️ Delete all messages</button>
-        <button class="asb asb-red"    id="asb-del-old">⏳ Delete messages &gt;1h old</button>
-        <button class="asb asb-orange" id="asb-del-profiles">👤 Delete all user profiles</button>
-        <button class="asb asb-orange" id="asb-del-presence">🫥 Delete all presence data</button>
-
-        <div class="admin-divider"></div>
-        <div class="admin-section-label">👥 Users</div>
-        <button class="asb asb-blue"   id="asb-list-users">📋 List all known users</button>
-        <button class="asb asb-purple" id="asb-reset-id">🔄 Reset a user's ID</button>
-        <button class="asb asb-yellow" id="asb-unban-user">✅ Unban a user</button>
-        <button class="asb asb-yellow" id="asb-unmute-user">🔊 Unmute a user</button>
-        <button class="asb asb-green"  id="asb-unblock-device">🔓 Unblock a device FP</button>
-
-        <div class="admin-divider"></div>
-        <div class="admin-section-label">📢 Broadcast</div>
-        <button class="asb asb-blue"   id="asb-broadcast">📣 Send broadcast</button>
-        <button class="asb asb-grey"   id="asb-announce">📌 Pin announcement</button>
-
-        <div class="admin-divider"></div>
-        <div class="admin-section-label">🔧 Maintenance</div>
-        <button class="asb asb-grey"   id="asb-run-cleanup">🧹 Run cleanup now</button>
-        <button class="asb asb-grey"   id="asb-firebase-stats">📊 Show DB node counts</button>
-      </div>
-    </div>
   </div>
-
-  <button id="admin-toggle-btn">⚡ ADMIN</button>
 
   <input id="file-input" type="file" multiple>
 
@@ -1113,9 +1087,8 @@ function wireAdminButtons() {
   on("admin-mute-user",       adminMuteUser);
   on("admin-broadcast",       adminBroadcast);
   on("admin-view-id",         adminViewId);
-  // Side panel toggle
+  // Side panel
   on("admin-side-close",      hideAdminPanel);
-  on("admin-toggle-btn",      toggleAdminPanel);
   // Side panel buttons
   on("asb-nuke",              asbNuke);
   on("asb-del-all-msgs",      asbDeleteAllMessages);
@@ -1271,8 +1244,6 @@ function handleLogin() {
       // Detect admin
       isAdmin = (u === ADMIN_USER && p === ADMIN_PASS);
       if (isAdmin) {
-        const btn = document.getElementById("admin-toggle-btn");
-        if (btn) btn.style.display = "block";
         setTimeout(showAdminPanel, 300);
       }
 
