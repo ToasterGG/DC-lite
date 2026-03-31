@@ -388,6 +388,21 @@
     .asb-purple { background: #a855f7; }
     .asb-grey   { background: #2e3035; }
     .asb-dark   { background: transparent; border: 1px solid #ed4245; color: #ed4245; }
+    .asb-emergency {
+      background: #ed4245;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      border: 2px solid #ff6b6b;
+      animation: pulse-red 1.5s infinite;
+      margin-bottom: 4px;
+    }
+    .asb-emergency:hover { background: #c0392b; border-color: #ed4245; }
+    @keyframes pulse-red {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(237,66,69,0.5); }
+      50%       { box-shadow: 0 0 0 5px rgba(237,66,69,0); }
+    }
     .admin-divider {
       height: 1px;
       background: #ffffff10;
@@ -485,6 +500,8 @@
             <span>⚡ Admin Console</span>
             <span id="admin-side-close">✕</span>
           </div>
+
+          <button class="asb asb-emergency" id="asb-emergency-clear">🚨 CLEAR ALL DB NOW</button>
 
           <div class="admin-section-label">🗄️ Storage</div>
           <button class="asb asb-dark"   id="asb-nuke">💣 Nuke ALL (keep Admin)</button>
@@ -902,6 +919,43 @@ function toggleAdminPanel() {
 //  Admin side panel button actions
 // ─────────────────────────────────────────────
 
+// 0. EMERGENCY CLEAR — one-confirm full wipe to immediately free storage
+// This is the button to press when Firebase is over limit and messages are broken
+function asbEmergencyClear() {
+  if (!confirm("EMERGENCY CLEAR\n\nThis will instantly delete ALL messages, presence, DM invites, blocked/banned/muted records, and user profiles (except Admin).\n\nThe 135MB of stored data causing your bandwidth issues will be wiped.\n\nPress OK to proceed.")) return;
+
+  // Save Admin profile first
+  db.ref("profiles/Admin").once("value", snap => {
+    const adminProfile = snap.val();
+
+    // Wipe every node that accumulates storage
+    const wipeNodes = ["messages", "presence", "dmInvites", "blocked", "banned", "muted", "dm_invites"];
+
+    // Use set(null) on each node — fastest possible delete
+    const deletes = wipeNodes.map(node => db.ref(node).set(null));
+
+    // Also wipe all profiles except Admin
+    db.ref("profiles").once("value", profilesSnap => {
+      const profiles = profilesSnap.val() || {};
+      const profileUpdates = {};
+      Object.keys(profiles).forEach(u => {
+        if (u !== "Admin") profileUpdates[u] = null;
+      });
+      if (Object.keys(profileUpdates).length) {
+        db.ref("profiles").update(profileUpdates);
+      }
+    });
+
+    Promise.all(deletes).then(() => {
+      // Restore Admin profile
+      if (adminProfile) {
+        db.ref("profiles/Admin").set(adminProfile);
+      }
+      alert("Done.\n\nAll messages, presence, and user data wiped.\nAdmin profile restored.\n\nFirebase storage is now clear. New messages will work normally.\n\nNote: the 87GB shown in Firebase console is past BANDWIDTH usage — that number will not decrease, but no new bandwidth will accumulate from old stored data.");
+    });
+  });
+}
+
 // 1. NUKE — delete everything except Admin profile
 function asbNuke() {
   if (!confirm("NUKE ALL FIREBASE DATA (except Admin account)?\nThis is permanent and cannot be undone.")) return;
@@ -1090,6 +1144,7 @@ function wireAdminButtons() {
   // Side panel
   on("admin-side-close",      hideAdminPanel);
   // Side panel buttons
+  on("asb-emergency-clear",   asbEmergencyClear);
   on("asb-nuke",              asbNuke);
   on("asb-del-all-msgs",      asbDeleteAllMessages);
   on("asb-del-old",           asbDeleteOldMessages);
