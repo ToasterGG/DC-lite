@@ -326,6 +326,106 @@
     /* Crown badge on admin's own username */
     .admin-crown { color: #faa81a; font-size: 11px; margin-left: 3px; }
 
+    /* ── Admin side panel ── */
+    #admin-side-panel {
+      width: 0;
+      min-width: 0;
+      overflow: hidden;
+      background: #111214;
+      border-left: 0px solid #ed4245;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.22s ease, border-width 0.22s ease;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    #admin-side-panel.open {
+      width: 230px;
+      min-width: 230px;
+      border-left-width: 2px;
+    }
+    #admin-side-panel-inner {
+      width: 230px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      height: 100%;
+    }
+    #admin-side-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #ed4245;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #admin-side-close {
+      cursor: pointer;
+      font-size: 16px;
+      color: #72767d;
+      line-height: 1;
+    }
+    #admin-side-close:hover { color: #fff; }
+    .asb {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: filter 0.1s, transform 0.08s;
+      color: #fff;
+    }
+    .asb:hover { filter: brightness(1.18); transform: translateX(2px); }
+    .asb:active { transform: translateX(0); filter: brightness(0.9); }
+    .asb-red    { background: #ed4245; }
+    .asb-orange { background: #f97316; }
+    .asb-yellow { background: #ca8a04; color: #fff; }
+    .asb-green  { background: #22c55e; }
+    .asb-blue   { background: #5865f2; }
+    .asb-purple { background: #a855f7; }
+    .asb-grey   { background: #383a40; }
+    .asb-dark   { background: #1a1b1e; border: 1px solid #ed4245; color: #ed4245; }
+    .admin-divider {
+      height: 1px;
+      background: #2b2d31;
+      margin: 4px 0;
+    }
+    .admin-section-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #72767d;
+      padding: 2px 4px;
+    }
+    #admin-toggle-btn {
+      position: fixed;
+      top: 8px;
+      right: 8px;
+      z-index: 200;
+      background: #ed4245;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: none;
+      letter-spacing: 0.5px;
+    }
+    #admin-toggle-btn:hover { background: #c23b3e; }
+
     /* ── Account ID in settings ── */
     .settings-id-box {
       background-color: #202225;
@@ -420,7 +520,44 @@
         <button id="send-button">Send</button>
       </div>
     </div>
+
+    <!-- Admin side panel — only visible when isAdmin -->
+    <div id="admin-side-panel">
+      <div id="admin-side-panel-inner">
+        <div id="admin-side-title">
+          <span>⚡ Admin Console</span>
+          <span id="admin-side-close">✕</span>
+        </div>
+
+        <div class="admin-section-label">🗄️ Storage</div>
+        <button class="asb asb-dark"   id="asb-nuke">💣 Nuke ALL storage (keep Admin)</button>
+        <button class="asb asb-red"    id="asb-del-all-msgs">🗑️ Delete all messages</button>
+        <button class="asb asb-red"    id="asb-del-old">⏳ Delete messages &gt;1h old</button>
+        <button class="asb asb-orange" id="asb-del-profiles">👤 Delete all user profiles</button>
+        <button class="asb asb-orange" id="asb-del-presence">🫥 Delete all presence data</button>
+
+        <div class="admin-divider"></div>
+        <div class="admin-section-label">👥 Users</div>
+        <button class="asb asb-blue"   id="asb-list-users">📋 List all known users</button>
+        <button class="asb asb-purple" id="asb-reset-id">🔄 Reset a user's ID</button>
+        <button class="asb asb-yellow" id="asb-unban-user">✅ Unban a user</button>
+        <button class="asb asb-yellow" id="asb-unmute-user">🔊 Unmute a user</button>
+        <button class="asb asb-green"  id="asb-unblock-device">🔓 Unblock a device FP</button>
+
+        <div class="admin-divider"></div>
+        <div class="admin-section-label">📢 Broadcast</div>
+        <button class="asb asb-blue"   id="asb-broadcast">📣 Send broadcast</button>
+        <button class="asb asb-grey"   id="asb-announce">📌 Pin announcement</button>
+
+        <div class="admin-divider"></div>
+        <div class="admin-section-label">🔧 Maintenance</div>
+        <button class="asb asb-grey"   id="asb-run-cleanup">🧹 Run cleanup now</button>
+        <button class="asb asb-grey"   id="asb-firebase-stats">📊 Show DB node counts</button>
+      </div>
+    </div>
   </div>
+
+  <button id="admin-toggle-btn">⚡ ADMIN</button>
 
   <input id="file-input" type="file" multiple>
 
@@ -774,12 +911,200 @@ function adminViewId() {
   });
 }
 
+// ─────────────────────────────────────────────
+//  Admin side panel — show/hide
+// ─────────────────────────────────────────────
+function showAdminPanel() {
+  document.getElementById("admin-side-panel").classList.add("open");
+}
+function hideAdminPanel() {
+  document.getElementById("admin-side-panel").classList.remove("open");
+}
+function toggleAdminPanel() {
+  document.getElementById("admin-side-panel").classList.toggle("open");
+}
+
+// ─────────────────────────────────────────────
+//  Admin side panel button actions
+// ─────────────────────────────────────────────
+
+// 1. NUKE — delete everything except Admin profile
+function asbNuke() {
+  if (!confirm("NUKE ALL FIREBASE DATA (except Admin account)?\nThis is permanent and cannot be undone.")) return;
+  if (!confirm("Are you absolutely sure? Type YES in the next prompt.")) return;
+  const check = prompt("Type YES to confirm total wipe:");
+  if (check !== "YES") { alert("Cancelled."); return; }
+
+  // Save admin profile before wiping
+  db.ref("profiles/Admin").once("value", snap => {
+    const adminProfile = snap.val();
+    // Wipe everything
+    db.ref("/").set(null, () => {
+      // Restore admin profile
+      if (adminProfile) {
+        db.ref("profiles/Admin").set(adminProfile);
+      }
+      alert("Done. All data wiped. Admin profile preserved.");
+    });
+  });
+}
+
+// 2. Delete all messages from every channel
+function asbDeleteAllMessages() {
+  if (!confirm("Delete ALL messages in ALL channels? Cannot be undone.")) return;
+  db.ref("messages").remove(() => alert("All messages deleted."));
+}
+
+// 3. Delete messages older than 1 hour (emergency trim)
+function asbDeleteOldMessages() {
+  const cutoff = Date.now() - (60 * 60 * 1000);
+  db.ref("messages").once("value", snap => {
+    const data = snap.val();
+    if (!data) { alert("No messages found."); return; }
+    let deleted = 0;
+    const promises = [];
+    Object.entries(data).forEach(([channel, msgs]) => {
+      if (!msgs) return;
+      const updates = {};
+      Object.entries(msgs).forEach(([key, msg]) => {
+        if ((msg.ts || 0) < cutoff) { updates[key] = null; deleted++; }
+      });
+      if (Object.keys(updates).length) {
+        promises.push(db.ref("messages/" + channel).update(updates));
+      }
+    });
+    Promise.all(promises).then(() => alert("Deleted " + deleted + " messages older than 1 hour."));
+  });
+}
+
+// 4. Delete all user profiles (except Admin)
+function asbDeleteProfiles() {
+  if (!confirm("Delete ALL user profiles except Admin?")) return;
+  db.ref("profiles").once("value", snap => {
+    const data = snap.val() || {};
+    const updates = {};
+    Object.keys(data).forEach(u => {
+      if (u !== "Admin") updates[u] = null;
+    });
+    db.ref("profiles").update(updates, () => alert("User profiles deleted (Admin preserved)."));
+  });
+}
+
+// 5. Delete all presence data
+function asbDeletePresence() {
+  if (!confirm("Delete all presence/heartbeat data?")) return;
+  db.ref("presence").remove(() => alert("Presence data cleared."));
+}
+
+// 6. List all users seen in presence + profiles
+function asbListUsers() {
+  db.ref("profiles").once("value", profilesSnap => {
+    db.ref("presence").once("value", presenceSnap => {
+      const profiles  = Object.keys(profilesSnap.val() || {});
+      const presence  = Object.keys(presenceSnap.val() || {});
+      const all       = [...new Set([...profiles, ...presence])].sort();
+      if (!all.length) { alert("No users found in Firebase."); return; }
+      alert("Known users (" + all.length + "):\n" + all.join("\n"));
+    });
+  });
+}
+
+// 7. Reset (regenerate) a user's ID — saves permanently to Firebase + wipes localStorage copy
+function asbResetId() {
+  const username = prompt("Enter the username whose ID to reset:");
+  if (!username || !username.trim()) return;
+  const u = username.trim();
+  if (!confirm("Reset the ID for '" + u + "'?\nTheir old ID will be gone permanently.")) return;
+
+  // Generate a fresh random ID (not derived — this is an admin override)
+  let newId = String(Math.floor(Math.random() * 9) + 1);
+  for (let i = 0; i < 14; i++) newId += String(Math.floor(Math.random() * 10));
+
+  db.ref("profiles/" + u + "/id").set(newId, () => {
+    // Invalidate ID caches
+    if (userIdCache[u]) delete userIdCache[u];
+    alert("ID for '" + u + "' has been reset to:\n" + newId + "\n\nThis is saved permanently in Firebase.");
+  });
+}
+
+// 8. Unban a user
+function asbUnbanUser() {
+  const u = prompt("Username to unban:");
+  if (!u || !u.trim()) return;
+  db.ref("banned/" + u.trim()).remove(() => alert("'" + u.trim() + "' has been unbanned."));
+}
+
+// 9. Unmute a user
+function asbUnmuteUser() {
+  const u = prompt("Username to unmute:");
+  if (!u || !u.trim()) return;
+  db.ref("muted/" + u.trim()).remove(() => alert("'" + u.trim() + "' has been unmuted."));
+}
+
+// 10. Unblock a device fingerprint
+function asbUnblockDevice() {
+  const fp = prompt("Device fingerprint to unblock (e.g. fp_a1b2c3d4):");
+  if (!fp || !fp.trim()) return;
+  db.ref("blocked/" + fp.trim()).remove(() => alert("Device '" + fp.trim() + "' has been unblocked."));
+}
+
+// 11. Broadcast to all channels
+function asbBroadcast() {
+  const text = prompt("Broadcast message (sent to #general, #gaming, #random):");
+  if (!text || !text.trim()) return;
+  ["general", "gaming", "random"].forEach(ch => {
+    db.ref("messages/" + ch).push({
+      user: "📢 System", type: "text",
+      text: "[BROADCAST] " + text.trim(), ts: Date.now()
+    });
+  });
+  alert("Broadcast sent.");
+}
+
+// 12. Pin an announcement (pushes a sticky-looking message to general)
+function asbAnnounce() {
+  const text = prompt("Announcement text (pinned to #general):");
+  if (!text || !text.trim()) return;
+  db.ref("messages/general").push({
+    user: "📌 Announcement", type: "text",
+    text: text.trim(), ts: Date.now()
+  });
+  alert("Announcement posted to #general.");
+}
+
+// 13. Run cleanup manually right now
+function asbRunCleanup() {
+  runCleanup();
+  alert("Cleanup triggered: old messages, idle DMs, and stale users will be purged.");
+}
+
+// 14. Show Firebase node counts
+function asbFirebaseStats() {
+  db.ref("/").once("value", snap => {
+    const data = snap.val() || {};
+    const lines = [];
+    // Count top-level keys and their children
+    Object.entries(data).forEach(([key, val]) => {
+      const count = val && typeof val === "object" ? Object.keys(val).length : 1;
+      lines.push(key + ": " + count + " entries");
+      // For messages, count per-channel
+      if (key === "messages") {
+        Object.entries(val || {}).forEach(([ch, msgs]) => {
+          lines.push("  #" + ch + ": " + (msgs ? Object.keys(msgs).length : 0) + " messages");
+        });
+      }
+    });
+    alert("Firebase node counts:\n" + (lines.join("\n") || "Empty database"));
+  });
+}
+
 // Wire admin panel buttons — deferred so DOM is guaranteed present
 function wireAdminButtons() {
   function on(id, fn) {
     const el = document.getElementById(id);
     if (el) el.onclick = fn;
   }
+  // Context menu panel (click-on-user)
   on("admin-close",           closeAdminPanel);
   on("admin-delete-msg",      adminDeleteMessage);
   on("admin-delete-all-msgs", adminDeleteAllMessages);
@@ -788,6 +1113,24 @@ function wireAdminButtons() {
   on("admin-mute-user",       adminMuteUser);
   on("admin-broadcast",       adminBroadcast);
   on("admin-view-id",         adminViewId);
+  // Side panel toggle
+  on("admin-side-close",      hideAdminPanel);
+  on("admin-toggle-btn",      toggleAdminPanel);
+  // Side panel buttons
+  on("asb-nuke",              asbNuke);
+  on("asb-del-all-msgs",      asbDeleteAllMessages);
+  on("asb-del-old",           asbDeleteOldMessages);
+  on("asb-del-profiles",      asbDeleteProfiles);
+  on("asb-del-presence",      asbDeletePresence);
+  on("asb-list-users",        asbListUsers);
+  on("asb-reset-id",          asbResetId);
+  on("asb-unban-user",        asbUnbanUser);
+  on("asb-unmute-user",       asbUnmuteUser);
+  on("asb-unblock-device",    asbUnblockDevice);
+  on("asb-broadcast",         asbBroadcast);
+  on("asb-announce",          asbAnnounce);
+  on("asb-run-cleanup",       asbRunCleanup);
+  on("asb-firebase-stats",    asbFirebaseStats);
 }
 
 // ─────────────────────────────────────────────
@@ -927,6 +1270,11 @@ function handleLogin() {
 
       // Detect admin
       isAdmin = (u === ADMIN_USER && p === ADMIN_PASS);
+      if (isAdmin) {
+        const btn = document.getElementById("admin-toggle-btn");
+        if (btn) btn.style.display = "block";
+        setTimeout(showAdminPanel, 300);
+      }
 
       // Record device fingerprint on the user's profile (admin can retrieve it)
       db.ref("profiles/" + u + "/deviceFp").set(fp);
