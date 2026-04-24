@@ -342,7 +342,7 @@
       flex-direction: column;
       gap: 4px;
       overflow-y: auto;
-      max-height: 340px;   /* scroll if buttons overflow */
+      max-height: 340px;
       padding: 0 2px 4px 2px;
     }
     #admin-side-title {
@@ -659,6 +659,9 @@ let currentVideoFilename = null;
 // Tracks which channels already have an active unread listener
 const watchingChannels = {};
 
+// Initialise badge counts map once at the top level — avoids any TDZ issues
+window._badgeCounts = {};
+
 // Admin credentials (checked client-side; Firebase rules are the real gate)
 const ADMIN_USER = "Admin";
 const ADMIN_PASS = "bbecRa79";
@@ -674,28 +677,20 @@ function lsGet(k)    { try { return localStorage.getItem(k); }  catch(_) { retur
 function lsSet(k, v) { try { localStorage.setItem(k, v); }      catch(_) {} }
 
 // ─────────────────────────────────────────────
-//  Account ID  (15-digit, unique per username+password pair)
-//  Path: /profiles/<username>/id  →  "123456789012345"
-//
-//  The ID is derived from a hash of "username:password" so:
-//   - Two users with the same name but different passwords get different IDs
-//   - The same user always gets the same ID on any device (deterministic)
-//   - The password is never stored in Firebase — only the derived ID is
+//  Account ID
 // ─────────────────────────────────────────────
 let currentUserId   = null;
-let currentPassword = "";   // held in memory only, never written anywhere
+let currentPassword = "";
 
-// Simple but effective 32-bit hash (variant of FNV-1a)
 function hashString(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
     h ^= str.charCodeAt(i);
-    h = (h * 16777619) >>> 0;  // keep 32-bit unsigned
+    h = (h * 16777619) >>> 0;
   }
   return h;
 }
 
-// Seeded PRNG (mulberry32) — gives deterministic sequence from one seed
 function mulberry32(seed) {
   return function() {
     seed |= 0; seed = seed + 0x6D2B79F5 | 0;
@@ -706,10 +701,8 @@ function mulberry32(seed) {
 }
 
 function deriveIdFromCredentials(username, password) {
-  // Hash the combined credential string to a 32-bit seed
   const seed = hashString(username + ":" + password);
   const rand  = mulberry32(seed);
-  // Generate 15 digits: first must be 1-9
   let id = String(Math.floor(rand() * 9) + 1);
   for (let i = 0; i < 14; i++) id += String(Math.floor(rand() * 10));
   return id;
@@ -718,16 +711,8 @@ function deriveIdFromCredentials(username, password) {
 function idKey(username) { return "dl_id_" + username; }
 
 function loadOrCreateId(username, password) {
-  // Derive the canonical ID for this username+password pair
   const derivedId = deriveIdFromCredentials(username, password);
-
-  // Check if Firebase already has an ID for this username
   db.ref("profiles/" + username + "/id").once("value", snap => {
-    const existingId = snap.val();
-    // If the stored ID doesn't match what we'd derive, this is either a new
-    // account or the password changed — overwrite with the correct derived ID
-    const id = existingId || derivedId;
-    // Always write our derived ID (idempotent if same credentials)
     db.ref("profiles/" + username + "/id").set(derivedId);
     lsSet(idKey(username), derivedId);
     currentUserId = derivedId;
@@ -744,7 +729,7 @@ function showIdInSettings(id) {
 }
 
 // ── ID cache for other users (fetched on demand for tooltips) ──
-const userIdCache = {}; // username → id string
+const userIdCache = {};
 
 function fetchUserId(username, callback) {
   if (userIdCache[username]) { callback(userIdCache[username]); return; }
@@ -756,15 +741,11 @@ function fetchUserId(username, callback) {
 }
 
 // ─────────────────────────────────────────────
-//  Device fingerprint  (used for blocking)
-//  A lightweight fingerprint stored in localStorage under a fixed key.
-//  On block, admin writes it to /blocked/<fp> = true.
-//  On every login, the client checks /blocked/<fp> before proceeding.
+//  Device fingerprint
 // ─────────────────────────────────────────────
 function getDeviceFingerprint() {
   let fp = lsGet("dl_device_fp");
   if (fp) return fp;
-  // Generate once and persist — combination of random + browser traits
   const traits = [
     navigator.userAgent,
     navigator.language,
@@ -805,7 +786,6 @@ function closeAdminPanel() {
   adminTarget = { user: null, messageKey: null, channel: null, deviceFp: null };
 }
 
-// Delete a specific message
 function adminDeleteMessage() {
   if (!adminTarget.messageKey || !adminTarget.channel) {
     alert("No message selected."); return;
@@ -815,12 +795,9 @@ function adminDeleteMessage() {
   closeAdminPanel();
 }
 
-// Delete all messages from a user across ALL channels
 function adminDeleteAllMessages() {
   if (!adminTarget.user) return;
   if (!confirm("Delete ALL messages from " + adminTarget.user + " across every channel? This cannot be undone.")) return;
-  const allChannels = ["general", "gaming", "random"];
-  // Also scan Firebase messages node for DM channels
   db.ref("messages").once("value", snap => {
     const data = snap.val() || {};
     Object.keys(data).forEach(ch => {
@@ -836,24 +813,20 @@ function adminDeleteAllMessages() {
   closeAdminPanel();
 }
 
-// Delete user profile + presence (account wipe)
 function adminDeleteUser() {
   if (!adminTarget.user) return;
   if (!confirm("Permanently delete account '" + adminTarget.user + "'? This removes their profile and presence.")) return;
   db.ref("profiles/" + adminTarget.user).remove();
   db.ref("presence/" + adminTarget.user).remove();
   db.ref("dmInvites/" + adminTarget.user).remove();
-  // Write a tombstone so the client gets kicked next login
   db.ref("banned/" + adminTarget.user).set({ ts: Date.now(), by: ADMIN_USER });
   closeAdminPanel();
 }
 
-// Block the device fingerprint stored on the target's profile
 function adminBlockDevice() {
   const fp = adminTarget.deviceFp;
   if (!fp) {
     alert("No device fingerprint available for this user yet.\nThey must have logged in at least once for a fingerprint to be recorded.");
-
     return;
   }
   if (!confirm("Block device " + fp + "? This prevents them logging in from this device.")) return;
@@ -861,7 +834,6 @@ function adminBlockDevice() {
   closeAdminPanel();
 }
 
-// Mute: write /muted/<user> = true; client checks this before sending
 function adminMuteUser() {
   if (!adminTarget.user) return;
   db.ref("muted/" + adminTarget.user).once("value", snap => {
@@ -879,7 +851,6 @@ function adminMuteUser() {
   closeAdminPanel();
 }
 
-// Broadcast: push a system message to every static channel
 function adminBroadcast() {
   const text = prompt("Broadcast message (sent to #general, #gaming, #random):");
   if (!text || !text.trim()) return;
@@ -894,7 +865,6 @@ function adminBroadcast() {
   closeAdminPanel();
 }
 
-// Show account ID in panel
 function adminViewId() {
   if (!adminTarget.user) return;
   fetchUserId(adminTarget.user, id => {
@@ -919,22 +889,14 @@ function toggleAdminPanel() {
 //  Admin side panel button actions
 // ─────────────────────────────────────────────
 
-// 0. EMERGENCY CLEAR — one-confirm full wipe to immediately free storage
-// This is the button to press when Firebase is over limit and messages are broken
 function asbEmergencyClear() {
-  if (!confirm("EMERGENCY CLEAR\n\nThis will instantly delete ALL messages, presence, DM invites, blocked/banned/muted records, and user profiles (except Admin).\n\nThe 135MB of stored data causing your bandwidth issues will be wiped.\n\nPress OK to proceed.")) return;
+  if (!confirm("EMERGENCY CLEAR\n\nThis will instantly delete ALL messages, presence, DM invites, blocked/banned/muted records, and user profiles (except Admin).\n\nPress OK to proceed.")) return;
 
-  // Save Admin profile first
   db.ref("profiles/Admin").once("value", snap => {
     const adminProfile = snap.val();
-
-    // Wipe every node that accumulates storage
     const wipeNodes = ["messages", "presence", "dmInvites", "blocked", "banned", "muted", "dm_invites"];
-
-    // Use set(null) on each node — fastest possible delete
     const deletes = wipeNodes.map(node => db.ref(node).set(null));
 
-    // Also wipe all profiles except Admin
     db.ref("profiles").once("value", profilesSnap => {
       const profiles = profilesSnap.val() || {};
       const profileUpdates = {};
@@ -947,28 +909,23 @@ function asbEmergencyClear() {
     });
 
     Promise.all(deletes).then(() => {
-      // Restore Admin profile
       if (adminProfile) {
         db.ref("profiles/Admin").set(adminProfile);
       }
-      alert("Done.\n\nAll messages, presence, and user data wiped.\nAdmin profile restored.\n\nFirebase storage is now clear. New messages will work normally.\n\nNote: the 87GB shown in Firebase console is past BANDWIDTH usage — that number will not decrease, but no new bandwidth will accumulate from old stored data.");
+      alert("Done. All messages, presence, and user data wiped. Admin profile restored.");
     });
   });
 }
 
-// 1. NUKE — delete everything except Admin profile
 function asbNuke() {
   if (!confirm("NUKE ALL FIREBASE DATA (except Admin account)?\nThis is permanent and cannot be undone.")) return;
   if (!confirm("Are you absolutely sure? Type YES in the next prompt.")) return;
   const check = prompt("Type YES to confirm total wipe:");
   if (check !== "YES") { alert("Cancelled."); return; }
 
-  // Save admin profile before wiping
   db.ref("profiles/Admin").once("value", snap => {
     const adminProfile = snap.val();
-    // Wipe everything
     db.ref("/").set(null, () => {
-      // Restore admin profile
       if (adminProfile) {
         db.ref("profiles/Admin").set(adminProfile);
       }
@@ -977,13 +934,11 @@ function asbNuke() {
   });
 }
 
-// 2. Delete all messages from every channel
 function asbDeleteAllMessages() {
   if (!confirm("Delete ALL messages in ALL channels? Cannot be undone.")) return;
   db.ref("messages").remove(() => alert("All messages deleted."));
 }
 
-// 3. Delete messages older than 1 hour (emergency trim)
 function asbDeleteOldMessages() {
   const cutoff = Date.now() - (60 * 60 * 1000);
   db.ref("messages").once("value", snap => {
@@ -1005,7 +960,6 @@ function asbDeleteOldMessages() {
   });
 }
 
-// 4. Delete all user profiles (except Admin)
 function asbDeleteProfiles() {
   if (!confirm("Delete ALL user profiles except Admin?")) return;
   db.ref("profiles").once("value", snap => {
@@ -1018,13 +972,11 @@ function asbDeleteProfiles() {
   });
 }
 
-// 5. Delete all presence data
 function asbDeletePresence() {
   if (!confirm("Delete all presence/heartbeat data?")) return;
   db.ref("presence").remove(() => alert("Presence data cleared."));
 }
 
-// 6. List all users seen in presence + profiles
 function asbListUsers() {
   db.ref("profiles").once("value", profilesSnap => {
     db.ref("presence").once("value", presenceSnap => {
@@ -1037,46 +989,39 @@ function asbListUsers() {
   });
 }
 
-// 7. Reset (regenerate) a user's ID — saves permanently to Firebase + wipes localStorage copy
 function asbResetId() {
   const username = prompt("Enter the username whose ID to reset:");
   if (!username || !username.trim()) return;
   const u = username.trim();
   if (!confirm("Reset the ID for '" + u + "'?\nTheir old ID will be gone permanently.")) return;
 
-  // Generate a fresh random ID (not derived — this is an admin override)
   let newId = String(Math.floor(Math.random() * 9) + 1);
   for (let i = 0; i < 14; i++) newId += String(Math.floor(Math.random() * 10));
 
   db.ref("profiles/" + u + "/id").set(newId, () => {
-    // Invalidate ID caches
     if (userIdCache[u]) delete userIdCache[u];
-    alert("ID for '" + u + "' has been reset to:\n" + newId + "\n\nThis is saved permanently in Firebase.");
+    alert("ID for '" + u + "' has been reset to:\n" + newId);
   });
 }
 
-// 8. Unban a user
 function asbUnbanUser() {
   const u = prompt("Username to unban:");
   if (!u || !u.trim()) return;
   db.ref("banned/" + u.trim()).remove(() => alert("'" + u.trim() + "' has been unbanned."));
 }
 
-// 9. Unmute a user
 function asbUnmuteUser() {
   const u = prompt("Username to unmute:");
   if (!u || !u.trim()) return;
   db.ref("muted/" + u.trim()).remove(() => alert("'" + u.trim() + "' has been unmuted."));
 }
 
-// 10. Unblock a device fingerprint
 function asbUnblockDevice() {
   const fp = prompt("Device fingerprint to unblock (e.g. fp_a1b2c3d4):");
   if (!fp || !fp.trim()) return;
   db.ref("blocked/" + fp.trim()).remove(() => alert("Device '" + fp.trim() + "' has been unblocked."));
 }
 
-// 11. Broadcast to all channels
 function asbBroadcast() {
   const text = prompt("Broadcast message (sent to #general, #gaming, #random):");
   if (!text || !text.trim()) return;
@@ -1089,7 +1034,6 @@ function asbBroadcast() {
   alert("Broadcast sent.");
 }
 
-// 12. Pin an announcement (pushes a sticky-looking message to general)
 function asbAnnounce() {
   const text = prompt("Announcement text (pinned to #general):");
   if (!text || !text.trim()) return;
@@ -1100,22 +1044,18 @@ function asbAnnounce() {
   alert("Announcement posted to #general.");
 }
 
-// 13. Run cleanup manually right now
 function asbRunCleanup() {
   runCleanup();
-  alert("Cleanup triggered: old messages, idle DMs, and stale users will be purged.");
+  alert("Cleanup triggered.");
 }
 
-// 14. Show Firebase node counts
 function asbFirebaseStats() {
   db.ref("/").once("value", snap => {
     const data = snap.val() || {};
     const lines = [];
-    // Count top-level keys and their children
     Object.entries(data).forEach(([key, val]) => {
       const count = val && typeof val === "object" ? Object.keys(val).length : 1;
       lines.push(key + ": " + count + " entries");
-      // For messages, count per-channel
       if (key === "messages") {
         Object.entries(val || {}).forEach(([ch, msgs]) => {
           lines.push("  #" + ch + ": " + (msgs ? Object.keys(msgs).length : 0) + " messages");
@@ -1126,13 +1066,11 @@ function asbFirebaseStats() {
   });
 }
 
-// Wire admin panel buttons — deferred so DOM is guaranteed present
 function wireAdminButtons() {
   function on(id, fn) {
     const el = document.getElementById(id);
     if (el) el.onclick = fn;
   }
-  // Context menu panel (click-on-user)
   on("admin-close",           closeAdminPanel);
   on("admin-delete-msg",      adminDeleteMessage);
   on("admin-delete-all-msgs", adminDeleteAllMessages);
@@ -1141,9 +1079,7 @@ function wireAdminButtons() {
   on("admin-mute-user",       adminMuteUser);
   on("admin-broadcast",       adminBroadcast);
   on("admin-view-id",         adminViewId);
-  // Side panel
   on("admin-side-close",      hideAdminPanel);
-  // Side panel buttons
   on("asb-emergency-clear",   asbEmergencyClear);
   on("asb-nuke",              asbNuke);
   on("asb-del-all-msgs",      asbDeleteAllMessages);
@@ -1162,7 +1098,7 @@ function wireAdminButtons() {
 }
 
 // ─────────────────────────────────────────────
-//  Friends persistence  (per-user)
+//  Friends persistence
 // ─────────────────────────────────────────────
 function friendsKey(u) { return "dl_friends_" + u; }
 
@@ -1209,20 +1145,14 @@ function lastSeenKey(channelKey) {
 
 function markChannelRead(channelKey) {
   lsSet(lastSeenKey(channelKey), Date.now().toString());
-  if (window._badgeCounts) window._badgeCounts[channelKey] = 0;
+  window._badgeCounts[channelKey] = 0;
   setBadge(channelKey, 0);
 }
 
 // Watch a channel and update its unread badge in real-time.
-// Only counts messages from OTHER users that arrived after last seen.
 function watchUnreads(channelKey) {
   if (watchingChannels[channelKey]) return;
   watchingChannels[channelKey] = true;
-
-  // Use child_added for badge watching too — avoids full re-download
-  // We track a local count per channel rather than scanning all messages
-  const badgeCounts = badgeCounts || {};
-  if (!window._badgeCounts) window._badgeCounts = {};
 
   db.ref("messages/" + channelKey).orderByChild("ts").on("child_added", snap => {
     if (channelKey === currentChannel) { markChannelRead(channelKey); return; }
@@ -1262,10 +1192,8 @@ function handleLogin() {
   const p = document.getElementById("login-password").value.trim();
   if (!u) return;
 
-  // ── Pre-login checks ────────────────────────────────────────────────────
   const fp = getDeviceFingerprint();
 
-  // 1. Check device block
   checkDeviceBlocked(fp, blocked => {
     if (blocked) {
       document.getElementById("login-username").value = "";
@@ -1274,7 +1202,6 @@ function handleLogin() {
       return;
     }
 
-    // 2. Check account ban
     db.ref("banned/" + u).once("value", banSnap => {
       if (banSnap.val()) {
         alert("This account has been banned.");
@@ -1283,12 +1210,10 @@ function handleLogin() {
         return;
       }
 
-      // 3. Check mute status (load it so sendTextMessage can honour it)
       db.ref("muted/" + u).once("value", muteSnap => {
         window._isMuted = !!muteSnap.val();
       });
 
-      // ── All clear — proceed with login ────────────────────────────────
       currentUser     = u;
       currentPassword = p;
       lsSet("dl_username", u);
@@ -1296,13 +1221,11 @@ function handleLogin() {
       currentPfp = lsGet("dl_pfp_" + u) || null;
       if (currentPfp) profileCache[u] = currentPfp;
 
-      // Detect admin
       isAdmin = (u === ADMIN_USER && p === ADMIN_PASS);
       if (isAdmin) {
         setTimeout(showAdminPanel, 300);
       }
 
-      // Record device fingerprint on the user's profile (admin can retrieve it)
       db.ref("profiles/" + u + "/deviceFp").set(fp);
 
       document.getElementById("login-overlay").style.display = "none";
@@ -1351,7 +1274,7 @@ function saveSettings() {
     reader.onload = e => {
       lsSet("dl_pfp_" + currentUser, e.target.result);
       currentPfp = e.target.result;
-      saveProfilePfp(e.target.result);  // write to /profiles/<user>/pfp
+      saveProfilePfp(e.target.result);
       applySettings();
       closeSettings();
     };
@@ -1372,12 +1295,6 @@ function dmChannelName(a, b) {
   return "dm_" + [a, b].sort().join("_");
 }
 
-// ── Cross-user DM invites ─────────────────────────────────────────────────
-// When user A adds user B, we write:
-//   /dmInvites/<userB>/<channelKey> → { from: "A", ts: ... }
-// User B's client listens for child_added on /dmInvites/<userB>/
-// and auto-adds A to their friends list.
-
 function sendDMInvite(toUser) {
   const channelKey = dmChannelName(currentUser, toUser);
   db.ref("dmInvites/" + toUser + "/" + channelKey).set({
@@ -1393,35 +1310,23 @@ function listenForDMInvites() {
     const fromUser = data.from;
     const added = persistFriend(currentUser, fromUser);
     if (added) renderFriendEntry(fromUser);
-    snap.ref.remove(); // consume the invite so it doesn't re-fire on reload
+    snap.ref.remove();
   });
 }
 
 // ─────────────────────────────────────────────
-//  AUTO-CLEANUP  (runs once on every login)
-//
-//  Three passes, all permanent deletes — no backups:
-//    1. Messages  older than 24 h  →  deleted from every channel
-//    2. DM channels with no message in 48 h  →  entire /messages/dm_… node deleted
-//    3. User-presence records not touched in 72 h  →  /presence/<user> deleted
-//
-//  User presence is a tiny heartbeat record:
-//    /presence/<username>  →  { ts: <epoch ms> }
-//  We write/refresh it on login and every 10 minutes while the tab is open.
+//  AUTO-CLEANUP
 // ─────────────────────────────────────────────
+const CLEANUP_MSG_TTL  = 24 * 60 * 60 * 1000;
+const CLEANUP_DM_TTL   = 48 * 60 * 60 * 1000;
+const CLEANUP_USER_TTL = 72 * 60 * 60 * 1000;
+const STATIC_CHANNELS  = ["general", "gaming", "random"];
 
-const CLEANUP_MSG_TTL      = 24 * 60 * 60 * 1000;   // 24 h  — messages
-const CLEANUP_DM_TTL       = 48 * 60 * 60 * 1000;   // 48 h  — idle DM channels
-const CLEANUP_USER_TTL     = 72 * 60 * 60 * 1000;   // 72 h  — stale user records
-const STATIC_CHANNELS      = ["general", "gaming", "random"];
-
-// ── 1. Heartbeat ─────────────────────────────────────────────────────────────
 function touchPresence() {
   if (!currentUser) return;
   db.ref("presence/" + currentUser).set({ ts: Date.now() });
 }
 
-// ── 2. Delete messages older than 24 h inside one channel ────────────────────
 function purgeOldMessagesInChannel(channel) {
   const cutoff = Date.now() - CLEANUP_MSG_TTL;
   db.ref("messages/" + channel).once("value", snap => {
@@ -1437,7 +1342,6 @@ function purgeOldMessagesInChannel(channel) {
   });
 }
 
-// ── 3. Purge idle DM channels (last message > 48 h ago) ──────────────────────
 function purgeIdleDMChannels() {
   const cutoff = Date.now() - CLEANUP_DM_TTL;
   db.ref("messages").once("value", snap => {
@@ -1455,7 +1359,6 @@ function purgeIdleDMChannels() {
   });
 }
 
-// ── 4. Purge stale user presence records (last seen > 72 h ago) ──────────────
 function purgeStaleUsers() {
   const cutoff = Date.now() - CLEANUP_USER_TTL;
   db.ref("presence").once("value", snap => {
@@ -1464,34 +1367,26 @@ function purgeStaleUsers() {
     Object.entries(data).forEach(([user, record]) => {
       if ((record.ts || 0) < cutoff) {
         db.ref("presence/" + user).remove();
-        // Also remove any dmInvites queued for this user — they'll never log in
         db.ref("dmInvites/" + user).remove();
       }
     });
   });
 }
 
-// ── 5. Run all cleanups on login ─────────────────────────────────────────────
 function runCleanup() {
-  // Refresh this user's heartbeat immediately
   touchPresence();
-  // Keep refreshing every 10 minutes while tab stays open
   setInterval(touchPresence, 10 * 60 * 1000);
-
-  // Purge old messages from every static channel
   STATIC_CHANNELS.forEach(purgeOldMessagesInChannel);
-
-  // Purge old messages from every DM channel this user is part of
   loadFriends(currentUser).forEach(friend => {
     purgeOldMessagesInChannel(dmChannelName(currentUser, friend));
   });
-
-  // Purge whole idle DM channels and stale user records
   purgeIdleDMChannels();
   purgeStaleUsers();
 }
 
-// ── Render a single friend entry ──────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  Render friend entry
+// ─────────────────────────────────────────────
 function renderFriendEntry(name) {
   const channelKey = dmChannelName(currentUser, name);
 
@@ -1504,7 +1399,7 @@ function renderFriendEntry(name) {
   label.className = "friend-label has-id-tooltip";
   label.style.position = "relative";
   label.textContent = name;
-  // Tooltip for friend sidebar entry
+
   const friendTooltip = document.createElement("span");
   friendTooltip.className = "id-tooltip";
   friendTooltip.textContent = "loading…";
@@ -1524,8 +1419,6 @@ function renderFriendEntry(name) {
   div.onclick = () => openDM(name);
 
   document.getElementById("friends-list").appendChild(div);
-
-  // Start watching for unreads on this DM channel
   watchUnreads(channelKey);
 }
 
@@ -1534,7 +1427,9 @@ function renderAllFriends(username) {
   loadFriends(username).forEach(renderFriendEntry);
 }
 
-// ── Open DM ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  Open / Delete DM
+// ─────────────────────────────────────────────
 function openDM(friendName) {
   currentChannel = dmChannelName(currentUser, friendName);
   document.getElementById("header").textContent = "@" + friendName;
@@ -1548,13 +1443,11 @@ function openDM(friendName) {
   loadMessages(currentChannel);
 }
 
-// ── Delete DM ─────────────────────────────────────────────────────────────
 function deleteDM(friendName) {
   removeFriend(currentUser, friendName);
   const el = document.querySelector(`[data-friend-name="${friendName}"]`);
   if (el) el.remove();
 
-  // If we were viewing this DM, fall back to #general
   const dmKey = dmChannelName(currentUser, friendName);
   if (currentChannel === dmKey) {
     currentChannel = "general";
@@ -1565,7 +1458,7 @@ function deleteDM(friendName) {
 }
 
 // ─────────────────────────────────────────────
-//  @mention rendering helpers
+//  @mention rendering
 // ─────────────────────────────────────────────
 function renderTextWithMentions(text) {
   const frag  = document.createDocumentFragment();
@@ -1590,10 +1483,8 @@ function isMentionedInText(text) {
 
 // ─────────────────────────────────────────────
 //  Profile PFP cache
-//  Fetches /profiles/<user> once per session, stores locally.
-//  This means PFP data is fetched once, not embedded in every message.
 // ─────────────────────────────────────────────
-const profileCache = {}; // username → pfp data URL or "none"
+const profileCache = {};
 
 function getProfilePfp(username) {
   if (!username) return defaultPfp("?");
@@ -1602,13 +1493,11 @@ function getProfilePfp(username) {
       ? defaultPfp(username.charAt(0).toUpperCase())
       : profileCache[username];
   }
-  // Return default immediately; update DOM img elements when loaded
   if (profileCache[username] === undefined) {
     profileCache[username] = "pending";
     db.ref("profiles/" + username + "/pfp").once("value", snap => {
       const val = snap.val();
       profileCache[username] = val || "none";
-      // Update any already-rendered avatars for this user
       document.querySelectorAll(`.message-pfp[data-user="${username}"]`).forEach(el => {
         el.src = val ? val : defaultPfp(username.charAt(0).toUpperCase());
       });
@@ -1649,7 +1538,6 @@ function appendMessage(msg, msgKey, msgChannel) {
 
   const name = document.createElement("span");
   name.className = "message-username has-id-tooltip";
-  // Crown badge for admin's own messages
   if (msg.user === ADMIN_USER) {
     const crown = document.createElement("span");
     crown.className = "admin-crown";
@@ -1658,7 +1546,6 @@ function appendMessage(msg, msgKey, msgChannel) {
     name.appendChild(document.createTextNode(" "));
   }
   name.appendChild(document.createTextNode(msg.user + ": "));
-  // Tooltip element — populated lazily on first hover
   const tooltip = document.createElement("span");
   tooltip.className = "id-tooltip";
   tooltip.textContent = "loading…";
@@ -1666,14 +1553,12 @@ function appendMessage(msg, msgKey, msgChannel) {
   name.addEventListener("mouseenter", () => {
     fetchUserId(msg.user, id => { tooltip.textContent = "ID: " + id; });
   }, { once: true });
-  // Admin: click username to open admin panel for this user/message
   if (isAdmin && msg.user !== ADMIN_USER) {
     name.style.cursor = "pointer";
     name.addEventListener("click", e => {
       e.stopPropagation();
       const key = row.getAttribute("data-msg-key");
       const ch  = row.getAttribute("data-msg-channel");
-      // Fetch target's device fingerprint
       db.ref("profiles/" + msg.user + "/deviceFp").once("value", snap => {
         openAdminPanel(msg.user, key, ch, snap.val());
       });
@@ -1697,7 +1582,6 @@ function appendMessage(msg, msgKey, msgChannel) {
       img.onclick = () => openImageModal(local.url);
       content.appendChild(img);
     } else {
-      // Sent from another session — we don't have the bytes
       const note = document.createElement("span");
       note.className = "message-text";
       note.style.color = "#72767d";
@@ -1770,11 +1654,6 @@ function appendMessage(msg, msgKey, msgChannel) {
 
 // ─────────────────────────────────────────────
 //  Load messages
-//
-//  BANDWIDTH FIX: use child_added instead of on("value").
-//  on("value") re-downloads the ENTIRE channel on every new message.
-//  child_added fires once per existing message on attach, then
-//  once per new message only — never re-downloads old ones.
 // ─────────────────────────────────────────────
 let currentChannelRef = null;
 
@@ -1879,7 +1758,6 @@ const msgInput = document.getElementById("message-input");
 msgInput.addEventListener("input", function() {
   const val   = this.value;
   const caret = this.selectionStart;
-  // Walk left to find start of current word
   let i = caret - 1;
   while (i >= 0 && val[i] !== " " && val[i] !== "\n") i--;
   const wordStart = i + 1;
@@ -1938,14 +1816,7 @@ document.getElementById("file-input").onchange = async e => {
   e.target.value = "";
 };
 
-// ── BANDWIDTH FIX: media/files are NEVER stored in Firebase ──────────────────
-// Base64 in the database was the primary cause of massive download costs.
-// Instead we keep a local mediaStore map: token → objectURL.
-// Only a lightweight stub (type, filename, size, token) goes to Firebase.
-// The actual bytes live in the sender's browser session only.
-// Recipients see a "file shared — ask sender for the file" notice if they
-// weren't in the same session. This is unavoidable without paid storage.
-const mediaStore = {}; // token → { url, filename }
+const mediaStore = {};
 
 function makeToken() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -1972,7 +1843,6 @@ function sendImage(token, filename) {
   });
 }
 function sendVideo(token, filename, thumbnail) {
-  // thumbnail is a tiny 160x90 jpeg — keep it, it's small (~3 KB)
   db.ref("messages/" + currentChannel).push({
     user: currentUser, type: "video", token, filename, thumbnail, ts: Date.now()
   });
@@ -2069,7 +1939,7 @@ document.getElementById("add-friend-button").onclick = () => {
   const added = persistFriend(currentUser, name);
   if (added) {
     renderFriendEntry(name);
-    sendDMInvite(name); // notify the other user
+    sendDMInvite(name);
   }
   input.value = "";
 };
@@ -2079,7 +1949,7 @@ document.getElementById("add-friend-input").onkeydown = e => {
 };
 
 // ─────────────────────────────────────────────
-//  Init — runs after DOM is fully available
+//  Init
 // ─────────────────────────────────────────────
 function safeOn(id, fn) {
   const el = document.getElementById(id);
@@ -2121,12 +1991,8 @@ function init() {
 
   initUser();
   applySettings();
-  // Don't load messages yet — wait until user logs in
 }
 
-// document.write() (used by the bookmarklet) fires readyState=interactive
-// before scripts run, so DOMContentLoaded may have already fired.
-// Using setTimeout(0) guarantees we run after the current parse tick.
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", init);
 } else {
