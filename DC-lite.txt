@@ -195,17 +195,26 @@
       flex: 1; padding: 8px; border-radius: 4px; border: none; outline: none;
       background-color: #383a40; color: #ffffff; font-size: 15px;
     }
+    #message-input:disabled {
+      background-color: #2a2c31; color: #72767d; cursor: not-allowed; opacity: 0.6;
+    }
     #upload-button {
       width: 34px; height: 34px; border-radius: 4px; border: none;
       background-color: #5865f2; color: #ffffff; font-size: 18px; cursor: pointer;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     #upload-button:hover { background-color: #4752c4; }
+    #upload-button:disabled {
+      background-color: #383a40; cursor: not-allowed; opacity: 0.6;
+    }
     #send-button {
       padding: 8px 14px; border-radius: 4px; border: none;
       background-color: #5865f2; color: #ffffff; font-size: 14px; cursor: pointer; flex-shrink: 0;
     }
     #send-button:hover { background-color: #4752c4; }
+    #send-button:disabled {
+      background-color: #383a40; cursor: not-allowed; opacity: 0.6;
+    }
     #file-input { display: none; }
 
     /* ── Login overlay ── */
@@ -283,137 +292,45 @@
     ::-webkit-scrollbar-thumb { background: #202225; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #18191c; }
 
-    /* ── Admin panel ── */
-    #admin-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-      display: none; align-items: center; justify-content: center;
-      z-index: 2000; backdrop-filter: blur(6px);
+    /* ── Rate limit warning ── */
+    #rate-limit-warning {
+      position: fixed; top: 20px; right: 20px; background-color: #ed4245;
+      color: #ffffff; padding: 12px 16px; border-radius: 6px;
+      box-shadow: 0 0 20px rgba(237, 66, 69, 0.5); z-index: 2500;
+      display: none; font-weight: 600;
     }
-    #admin-panel {
-      width: 340px; max-width: 92%;
-      background: #1a1b1e;
-      border: 1px solid #ed4245;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 0 30px rgba(237,66,69,0.25);
-    }
-    #admin-panel h3 {
-      font-size: 14px; color: #ed4245; margin-bottom: 4px;
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-    #admin-target-info {
-      font-size: 12px; color: #72767d; margin-bottom: 12px;
-      font-family: monospace;
-    }
-    .admin-btn {
-      display: block; width: 100%; margin-bottom: 8px;
-      padding: 8px 12px; border-radius: 4px; border: none;
-      font-size: 13px; cursor: pointer; text-align: left;
-      transition: filter 0.1s;
-    }
-    .admin-btn:hover { filter: brightness(1.15); }
-    .admin-btn-red    { background: #ed4245; color: #fff; }
-    .admin-btn-orange { background: #f97316; color: #fff; }
-    .admin-btn-yellow { background: #eab308; color: #111; }
-    .admin-btn-blue   { background: #5865f2; color: #fff; }
-    .admin-btn-grey   { background: #383a40; color: #dcddde; }
-    #admin-close {
-      position: absolute; top: 12px; right: 14px;
-      cursor: pointer; font-size: 18px; color: #72767d;
-    }
-    #admin-close:hover { color: #fff; }
-    #admin-panel { position: relative; }
-    /* Crown badge on admin's own username */
-    .admin-crown { color: #faa81a; font-size: 11px; margin-left: 3px; }
 
-    /* ── Admin side panel — lives inside the left sidebar ── */
-    #admin-side-panel {
-      display: none;           /* hidden for non-admins */
-      flex-direction: column;
-      border-top: 1px solid #ed424540;
-      margin-top: 4px;
-      padding-top: 6px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    #admin-side-panel.open { display: flex; }
-    #admin-side-panel-inner {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+    /* ── Admin popup menu ── */
+    #admin-popup-menu {
+      position: fixed; right: 20px; top: 60px; background-color: #2b2d31;
+      border: 1px solid #ed4245; border-radius: 8px; padding: 0;
+      box-shadow: 0 0 30px rgba(237, 66, 69, 0.25); z-index: 2000;
+      display: none; flex-direction: column; min-width: 240px; max-height: 80vh;
       overflow-y: auto;
-      max-height: 340px;
-      padding: 0 2px 4px 2px;
     }
-    #admin-side-title {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #ed4245;
-      margin-bottom: 4px;
-      padding: 0 4px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    #admin-popup-menu.open { display: flex; }
+    #admin-popup-header {
+      padding: 12px 14px; border-bottom: 1px solid #ed424540;
+      display: flex; justify-content: space-between; align-items: center;
+      font-weight: 600; color: #ed4245; font-size: 14px;
     }
-    #admin-side-close {
-      cursor: pointer;
-      font-size: 14px;
-      color: #72767d;
+    #admin-popup-close {
+      cursor: pointer; font-size: 18px; color: #b9bbbe;
     }
-    #admin-side-close:hover { color: #fff; }
-    .asb {
-      display: block;
-      width: 100%;
-      padding: 5px 8px;
-      border-radius: 4px;
-      border: none;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: left;
-      transition: filter 0.1s;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    #admin-popup-close:hover { color: #ffffff; }
+    .admin-popup-item {
+      padding: 10px 14px; border-bottom: 1px solid #202225;
+      cursor: pointer; color: #dcddde; font-size: 13px;
+      transition: background-color 0.15s;
     }
-    .asb:hover { filter: brightness(1.2); }
-    .asb-red    { background: #ed4245; }
-    .asb-orange { background: #f97316; }
-    .asb-yellow { background: #ca8a04; }
-    .asb-green  { background: #22c55e; }
-    .asb-blue   { background: #5865f2; }
-    .asb-purple { background: #a855f7; }
-    .asb-grey   { background: #2e3035; }
-    .asb-dark   { background: transparent; border: 1px solid #ed4245; color: #ed4245; }
-    .asb-emergency {
-      background: #ed4245;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      border: 2px solid #ff6b6b;
-      animation: pulse-red 1.5s infinite;
-      margin-bottom: 4px;
-    }
-    .asb-emergency:hover { background: #c0392b; border-color: #ed4245; }
-    @keyframes pulse-red {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(237,66,69,0.5); }
-      50%       { box-shadow: 0 0 0 5px rgba(237,66,69,0); }
-    }
-    .admin-divider {
-      height: 1px;
-      background: #ffffff10;
-      margin: 2px 0;
-    }
-    .admin-section-label {
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #72767d;
-      padding: 2px 4px 0;
+    .admin-popup-item:last-child { border-bottom: none; }
+    .admin-popup-item:hover { background-color: #3a3c43; }
+    .admin-popup-item.danger { color: #ed4245; }
+    .admin-popup-item.danger:hover { background-color: rgba(237, 66, 69, 0.15); }
+    .admin-popup-item.warning { color: #f97316; }
+    .admin-popup-item.warning:hover { background-color: rgba(249, 115, 22, 0.15); }
+    .admin-popup-divider {
+      height: 1px; background-color: #202225; margin: 4px 0;
     }
 
     /* ── Account ID in settings ── */
@@ -490,43 +407,6 @@
             <input id="add-friend-input" placeholder="Add friend by name">
             <button id="add-friend-button">Add</button>
           </div>
-        </div>
-      </div>
-
-      <!-- Admin console — injected here, only shown for Admin account -->
-      <div id="admin-side-panel">
-        <div id="admin-side-panel-inner">
-          <div id="admin-side-title">
-            <span>⚡ Admin Console</span>
-            <span id="admin-side-close">✕</span>
-          </div>
-
-          <button class="asb asb-emergency" id="asb-emergency-clear">🚨 CLEAR ALL DB NOW</button>
-
-          <div class="admin-section-label">🗄️ Storage</div>
-          <button class="asb asb-dark"   id="asb-nuke">💣 Nuke ALL (keep Admin)</button>
-          <button class="asb asb-red"    id="asb-del-all-msgs">🗑️ Delete all messages</button>
-          <button class="asb asb-red"    id="asb-del-old">⏳ Delete msgs &gt;1h old</button>
-          <button class="asb asb-orange" id="asb-del-profiles">👤 Delete user profiles</button>
-          <button class="asb asb-orange" id="asb-del-presence">🫥 Delete presence data</button>
-
-          <div class="admin-divider"></div>
-          <div class="admin-section-label">👥 Users</div>
-          <button class="asb asb-blue"   id="asb-list-users">📋 List all users</button>
-          <button class="asb asb-purple" id="asb-reset-id">🔄 Reset a user's ID</button>
-          <button class="asb asb-yellow" id="asb-unban-user">✅ Unban a user</button>
-          <button class="asb asb-yellow" id="asb-unmute-user">🔊 Unmute a user</button>
-          <button class="asb asb-green"  id="asb-unblock-device">🔓 Unblock device FP</button>
-
-          <div class="admin-divider"></div>
-          <div class="admin-section-label">📢 Broadcast</div>
-          <button class="asb asb-blue"   id="asb-broadcast">📣 Send broadcast</button>
-          <button class="asb asb-grey"   id="asb-announce">📌 Pin announcement</button>
-
-          <div class="admin-divider"></div>
-          <div class="admin-section-label">🔧 Maintenance</div>
-          <button class="asb asb-grey"   id="asb-run-cleanup">🧹 Run cleanup now</button>
-          <button class="asb asb-grey"   id="asb-firebase-stats">📊 DB node counts</button>
         </div>
       </div>
 
@@ -609,23 +489,40 @@
     </div>
   </div>
 
-  <div id="watermark">made by Toby Ulliott</div>
+  <div id="rate-limit-warning"></div>
 
-  <!-- Admin panel modal -->
-  <div id="admin-overlay">
-    <div id="admin-panel">
-      <span id="admin-close">&times;</span>
-      <h3>⚡ Admin Panel</h3>
-      <div id="admin-target-info"></div>
-      <button class="admin-btn admin-btn-red"    id="admin-delete-msg">🗑️ Delete this message</button>
-      <button class="admin-btn admin-btn-red"    id="admin-delete-all-msgs">🗑️ Delete ALL messages from user</button>
-      <button class="admin-btn admin-btn-orange" id="admin-delete-user">💀 Delete user account</button>
-      <button class="admin-btn admin-btn-orange" id="admin-block-device">🚫 Block this device</button>
-      <button class="admin-btn admin-btn-yellow" id="admin-mute-user">🔇 Mute user (read-only)</button>
-      <button class="admin-btn admin-btn-blue"   id="admin-broadcast">📢 Send broadcast message</button>
-      <button class="admin-btn admin-btn-grey"   id="admin-view-id">🪪 View account ID</button>
+  <div id="admin-popup-menu">
+    <div id="admin-popup-header">
+      <span>⚡ Admin Console</span>
+      <span id="admin-popup-close">✕</span>
     </div>
+    <div class="admin-popup-divider"></div>
+    <div class="admin-popup-item danger" id="apop-emergency-clear">🚨 CLEAR ALL DB NOW</div>
+    <div class="admin-popup-divider"></div>
+    <div style="padding: 6px 14px; color: #72767d; font-size: 11px; text-transform: uppercase; font-weight: 600;">🗄️ Storage</div>
+    <div class="admin-popup-item danger" id="apop-nuke">💣 Nuke ALL (keep Admin)</div>
+    <div class="admin-popup-item danger" id="apop-del-all-msgs">🗑️ Delete all messages</div>
+    <div class="admin-popup-item danger" id="apop-del-old">⏳ Delete msgs >1h old</div>
+    <div class="admin-popup-item warning" id="apop-del-profiles">👤 Delete user profiles</div>
+    <div class="admin-popup-item warning" id="apop-del-presence">🫥 Delete presence data</div>
+    <div class="admin-popup-divider"></div>
+    <div style="padding: 6px 14px; color: #72767d; font-size: 11px; text-transform: uppercase; font-weight: 600;">👥 Users</div>
+    <div class="admin-popup-item" id="apop-list-users">📋 List all users</div>
+    <div class="admin-popup-item" id="apop-reset-id">🔄 Reset a user's ID</div>
+    <div class="admin-popup-item warning" id="apop-unban-user">✅ Unban a user</div>
+    <div class="admin-popup-item warning" id="apop-unmute-user">🔊 Unmute a user</div>
+    <div class="admin-popup-item warning" id="apop-unblock-device">🔓 Unblock device FP</div>
+    <div class="admin-popup-divider"></div>
+    <div style="padding: 6px 14px; color: #72767d; font-size: 11px; text-transform: uppercase; font-weight: 600;">📢 Broadcast</div>
+    <div class="admin-popup-item" id="apop-broadcast">📣 Send broadcast</div>
+    <div class="admin-popup-item" id="apop-announce">📌 Pin announcement</div>
+    <div class="admin-popup-divider"></div>
+    <div style="padding: 6px 14px; color: #72767d; font-size: 11px; text-transform: uppercase; font-weight: 600;">🔧 Maintenance</div>
+    <div class="admin-popup-item" id="apop-run-cleanup">🧹 Run cleanup now</div>
+    <div class="admin-popup-item" id="apop-firebase-stats">📊 DB node counts</div>
   </div>
+
+  <div id="watermark">made by Toby Ulliott</div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -667,14 +564,96 @@ const ADMIN_USER = "Admin";
 const ADMIN_PASS = "bbecRa79";
 let isAdmin = false;
 
-// Admin panel state — what user/message is currently targeted
-let adminTarget = { user: null, messageKey: null, channel: null, deviceFp: null };
+// Rate limiting
+const MESSAGE_RATE_LIMIT = 2;     // Max 2 messages per minute
+const RATE_LIMIT_WINDOW = 60000;  // 1 minute in milliseconds
+const WARNING_THRESHOLD = 4;       // Show warning at 4 messages
+const MUTE_THRESHOLD = 6;          // Mute at 6 messages
+const MUTE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+let messageTimestamps = []; // Track message send times
+let isMuted = false;
+let muteExpiresAt = null;
 
 // ─────────────────────────────────────────────
 //  localStorage helpers
 // ─────────────────────────────────────────────
 function lsGet(k)    { try { return localStorage.getItem(k); }  catch(_) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); }      catch(_) {} }
+
+// ─────────────────────────────────────────────
+//  Rate Limiting Functions
+// ─────────────────────────────────────────────
+function isUserMuted() {
+  if (!isMuted) return false;
+  if (Date.now() > muteExpiresAt) {
+    isMuted = false;
+    muteExpiresAt = null;
+    document.getElementById("message-input").disabled = false;
+    document.getElementById("send-button").disabled = false;
+    document.getElementById("upload-button").disabled = false;
+    hideRateLimitWarning();
+    return false;
+  }
+  return true;
+}
+
+function checkMessageRate() {
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW;
+  
+  // Remove old timestamps outside the window
+  messageTimestamps = messageTimestamps.filter(ts => ts > cutoff);
+  
+  const messageCount = messageTimestamps.length;
+  
+  // Check if muted
+  if (isUserMuted()) {
+    showRateLimitWarning("🚫 You are muted for " + Math.ceil((muteExpiresAt - now) / 1000) + "s");
+    return false;
+  }
+  
+  // Check thresholds
+  if (messageCount >= MUTE_THRESHOLD) {
+    isMuted = true;
+    muteExpiresAt = now + MUTE_DURATION;
+    document.getElementById("message-input").disabled = true;
+    document.getElementById("send-button").disabled = true;
+    document.getElementById("upload-button").disabled = true;
+    showRateLimitWarning("🚫 MUTED for 5 minutes - Message limit exceeded!");
+    setTimeout(() => {
+      isUserMuted();
+    }, MUTE_DURATION);
+    return false;
+  }
+  
+  if (messageCount >= WARNING_THRESHOLD) {
+    showRateLimitWarning("⚠️ Slow down! " + messageCount + "/6 before mute");
+    return false;
+  }
+  
+  if (messageCount >= MESSAGE_RATE_LIMIT) {
+    showRateLimitWarning("⚠️ Rate limited: " + messageCount + " messages");
+    return false;
+  }
+  
+  hideRateLimitWarning();
+  return true;
+}
+
+function addMessageTimestamp() {
+  messageTimestamps.push(Date.now());
+}
+
+function showRateLimitWarning(message) {
+  const warning = document.getElementById("rate-limit-warning");
+  warning.textContent = message;
+  warning.style.display = "block";
+}
+
+function hideRateLimitWarning() {
+  document.getElementById("rate-limit-warning").style.display = "none";
+}
 
 // ─────────────────────────────────────────────
 //  Account ID
@@ -770,123 +749,23 @@ function checkDeviceBlocked(fp, callback) {
 }
 
 // ─────────────────────────────────────────────
-//  Admin actions
+//  Admin Popup Menu Functions
 // ─────────────────────────────────────────────
-
-function openAdminPanel(targetUser, messageKey, channel, deviceFp) {
+function openAdminPopupMenu() {
   if (!isAdmin) return;
-  adminTarget = { user: targetUser, messageKey, channel, deviceFp };
-  document.getElementById("admin-target-info").textContent =
-    "Target: " + targetUser + (messageKey ? " · msg in #" + channel : "");
-  document.getElementById("admin-overlay").style.display = "flex";
+  document.getElementById("admin-popup-menu").classList.add("open");
 }
 
-function closeAdminPanel() {
-  document.getElementById("admin-overlay").style.display = "none";
-  adminTarget = { user: null, messageKey: null, channel: null, deviceFp: null };
+function closeAdminPopupMenu() {
+  document.getElementById("admin-popup-menu").classList.remove("open");
 }
 
-function adminDeleteMessage() {
-  if (!adminTarget.messageKey || !adminTarget.channel) {
-    alert("No message selected."); return;
-  }
-  if (!confirm("Delete this message permanently?")) return;
-  db.ref("messages/" + adminTarget.channel + "/" + adminTarget.messageKey).remove();
-  closeAdminPanel();
-}
-
-function adminDeleteAllMessages() {
-  if (!adminTarget.user) return;
-  if (!confirm("Delete ALL messages from " + adminTarget.user + " across every channel? This cannot be undone.")) return;
-  db.ref("messages").once("value", snap => {
-    const data = snap.val() || {};
-    Object.keys(data).forEach(ch => {
-      const msgs = data[ch];
-      if (!msgs) return;
-      const updates = {};
-      Object.entries(msgs).forEach(([key, msg]) => {
-        if (msg.user === adminTarget.user) updates[key] = null;
-      });
-      if (Object.keys(updates).length) db.ref("messages/" + ch).update(updates);
-    });
-  });
-  closeAdminPanel();
-}
-
-function adminDeleteUser() {
-  if (!adminTarget.user) return;
-  if (!confirm("Permanently delete account '" + adminTarget.user + "'? This removes their profile and presence.")) return;
-  db.ref("profiles/" + adminTarget.user).remove();
-  db.ref("presence/" + adminTarget.user).remove();
-  db.ref("dmInvites/" + adminTarget.user).remove();
-  db.ref("banned/" + adminTarget.user).set({ ts: Date.now(), by: ADMIN_USER });
-  closeAdminPanel();
-}
-
-function adminBlockDevice() {
-  const fp = adminTarget.deviceFp;
-  if (!fp) {
-    alert("No device fingerprint available for this user yet.\nThey must have logged in at least once for a fingerprint to be recorded.");
-    return;
-  }
-  if (!confirm("Block device " + fp + "? This prevents them logging in from this device.")) return;
-  db.ref("blocked/" + fp).set({ ts: Date.now(), by: ADMIN_USER });
-  closeAdminPanel();
-}
-
-function adminMuteUser() {
-  if (!adminTarget.user) return;
-  db.ref("muted/" + adminTarget.user).once("value", snap => {
-    const alreadyMuted = !!snap.val();
-    if (alreadyMuted) {
-      if (confirm("User is already muted. Unmute them?")) {
-        db.ref("muted/" + adminTarget.user).remove();
-      }
-    } else {
-      if (confirm("Mute " + adminTarget.user + "? They can read but not send messages.")) {
-        db.ref("muted/" + adminTarget.user).set({ ts: Date.now(), by: ADMIN_USER });
-      }
-    }
-  });
-  closeAdminPanel();
-}
-
-function adminBroadcast() {
-  const text = prompt("Broadcast message (sent to #general, #gaming, #random):");
-  if (!text || !text.trim()) return;
-  ["general", "gaming", "random"].forEach(ch => {
-    db.ref("messages/" + ch).push({
-      user: "📢 System",
-      type: "text",
-      text: "[BROADCAST] " + text.trim(),
-      ts: Date.now()
-    });
-  });
-  closeAdminPanel();
-}
-
-function adminViewId() {
-  if (!adminTarget.user) return;
-  fetchUserId(adminTarget.user, id => {
-    alert("Account ID for " + adminTarget.user + ":\n" + id);
-  });
+function toggleAdminPopupMenu() {
+  document.getElementById("admin-popup-menu").classList.toggle("open");
 }
 
 // ─────────────────────────────────────────────
-//  Admin side panel — show/hide
-// ─────────────────────────────────────────────
-function showAdminPanel() {
-  document.getElementById("admin-side-panel").classList.add("open");
-}
-function hideAdminPanel() {
-  document.getElementById("admin-side-panel").classList.remove("open");
-}
-function toggleAdminPanel() {
-  document.getElementById("admin-side-panel").classList.toggle("open");
-}
-
-// ─────────────────────────────────────────────
-//  Admin side panel button actions
+//  Admin Popup Menu Actions
 // ─────────────────────────────────────────────
 
 function asbEmergencyClear() {
@@ -915,6 +794,7 @@ function asbEmergencyClear() {
       alert("Done. All messages, presence, and user data wiped. Admin profile restored.");
     });
   });
+  closeAdminPopupMenu();
 }
 
 function asbNuke() {
@@ -932,11 +812,13 @@ function asbNuke() {
       alert("Done. All data wiped. Admin profile preserved.");
     });
   });
+  closeAdminPopupMenu();
 }
 
 function asbDeleteAllMessages() {
   if (!confirm("Delete ALL messages in ALL channels? Cannot be undone.")) return;
   db.ref("messages").remove(() => alert("All messages deleted."));
+  closeAdminPopupMenu();
 }
 
 function asbDeleteOldMessages() {
@@ -958,6 +840,7 @@ function asbDeleteOldMessages() {
     });
     Promise.all(promises).then(() => alert("Deleted " + deleted + " messages older than 1 hour."));
   });
+  closeAdminPopupMenu();
 }
 
 function asbDeleteProfiles() {
@@ -970,11 +853,13 @@ function asbDeleteProfiles() {
     });
     db.ref("profiles").update(updates, () => alert("User profiles deleted (Admin preserved)."));
   });
+  closeAdminPopupMenu();
 }
 
 function asbDeletePresence() {
   if (!confirm("Delete all presence/heartbeat data?")) return;
   db.ref("presence").remove(() => alert("Presence data cleared."));
+  closeAdminPopupMenu();
 }
 
 function asbListUsers() {
@@ -987,6 +872,7 @@ function asbListUsers() {
       alert("Known users (" + all.length + "):\n" + all.join("\n"));
     });
   });
+  closeAdminPopupMenu();
 }
 
 function asbResetId() {
@@ -999,27 +885,40 @@ function asbResetId() {
   for (let i = 0; i < 14; i++) newId += String(Math.floor(Math.random() * 10));
 
   db.ref("profiles/" + u + "/id").set(newId, () => {
-    if (userIdCache[u]) delete userIdCache[u];
-    alert("ID for '" + u + "' has been reset to:\n" + newId);
+    lsSet(idKey(u), newId);
+    alert("ID reset for " + u + " → " + newId);
   });
+  closeAdminPopupMenu();
 }
 
 function asbUnbanUser() {
-  const u = prompt("Username to unban:");
-  if (!u || !u.trim()) return;
-  db.ref("banned/" + u.trim()).remove(() => alert("'" + u.trim() + "' has been unbanned."));
+  const username = prompt("Enter the username to unban:");
+  if (!username || !username.trim()) return;
+  const u = username.trim();
+  if (!confirm("Unban " + u + "?")) return;
+
+  db.ref("banned/" + u).remove(() => alert(u + " unbanned."));
+  closeAdminPopupMenu();
 }
 
 function asbUnmuteUser() {
-  const u = prompt("Username to unmute:");
-  if (!u || !u.trim()) return;
-  db.ref("muted/" + u.trim()).remove(() => alert("'" + u.trim() + "' has been unmuted."));
+  const username = prompt("Enter the username to unmute:");
+  if (!username || !username.trim()) return;
+  const u = username.trim();
+  if (!confirm("Unmute " + u + "?")) return;
+
+  db.ref("muted/" + u).remove(() => alert(u + " unmuted."));
+  closeAdminPopupMenu();
 }
 
 function asbUnblockDevice() {
-  const fp = prompt("Device fingerprint to unblock (e.g. fp_a1b2c3d4):");
+  const fp = prompt("Enter the device fingerprint to unblock (format: fp_xxxxxxxx):");
   if (!fp || !fp.trim()) return;
-  db.ref("blocked/" + fp.trim()).remove(() => alert("Device '" + fp.trim() + "' has been unblocked."));
+  const f = fp.trim();
+  if (!confirm("Unblock device " + f + "?")) return;
+
+  db.ref("blocked/" + f).remove(() => alert("Device " + f + " unblocked."));
+  closeAdminPopupMenu();
 }
 
 function asbBroadcast() {
@@ -1027,977 +926,536 @@ function asbBroadcast() {
   if (!text || !text.trim()) return;
   ["general", "gaming", "random"].forEach(ch => {
     db.ref("messages/" + ch).push({
-      user: "📢 System", type: "text",
-      text: "[BROADCAST] " + text.trim(), ts: Date.now()
+      user: "📢 System",
+      type: "text",
+      text: "[BROADCAST] " + text.trim(),
+      ts: Date.now()
     });
   });
-  alert("Broadcast sent.");
+  closeAdminPopupMenu();
 }
 
 function asbAnnounce() {
-  const text = prompt("Announcement text (pinned to #general):");
+  const text = prompt("Announcement text:");
   if (!text || !text.trim()) return;
-  db.ref("messages/general").push({
-    user: "📌 Announcement", type: "text",
-    text: text.trim(), ts: Date.now()
+  db.ref("announcements").set({ text: text.trim(), ts: Date.now(), by: ADMIN_USER }, () => {
+    alert("Announcement pinned.");
   });
-  alert("Announcement posted to #general.");
+  closeAdminPopupMenu();
 }
 
 function asbRunCleanup() {
-  runCleanup();
-  alert("Cleanup triggered.");
+  const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+  db.ref("messages").once("value", snap => {
+    const data = snap.val();
+    if (!data) { alert("No messages found."); return; }
+    let deleted = 0;
+    const promises = [];
+    Object.entries(data).forEach(([channel, msgs]) => {
+      if (!msgs) return;
+      const updates = {};
+      Object.entries(msgs).forEach(([key, msg]) => {
+        if ((msg.ts || 0) < oneDayAgo) { updates[key] = null; deleted++; }
+      });
+      if (Object.keys(updates).length) {
+        promises.push(db.ref("messages/" + channel).update(updates));
+      }
+    });
+    Promise.all(promises).then(() => {
+      alert("Cleanup complete. Deleted " + deleted + " messages older than 24 hours.");
+    });
+  });
+  closeAdminPopupMenu();
 }
 
 function asbFirebaseStats() {
-  db.ref("/").once("value", snap => {
+  db.ref("messages").once("value", snap => {
+    let msgCount = 0;
     const data = snap.val() || {};
-    const lines = [];
-    Object.entries(data).forEach(([key, val]) => {
-      const count = val && typeof val === "object" ? Object.keys(val).length : 1;
-      lines.push(key + ": " + count + " entries");
-      if (key === "messages") {
-        Object.entries(val || {}).forEach(([ch, msgs]) => {
-          lines.push("  #" + ch + ": " + (msgs ? Object.keys(msgs).length : 0) + " messages");
-        });
-      }
+    Object.values(data).forEach(ch => {
+      msgCount += Object.keys(ch || {}).length;
     });
-    alert("Firebase node counts:\n" + (lines.join("\n") || "Empty database"));
+    
+    db.ref("profiles").once("value", profileSnap => {
+      const profileCount = Object.keys(profileSnap.val() || {}).length;
+      
+      db.ref("presence").once("value", presenceSnap => {
+        const presenceCount = Object.keys(presenceSnap.val() || {}).length;
+        
+        alert("📊 Database Stats:\n" +
+              "Messages: " + msgCount + "\n" +
+              "Profiles: " + profileCount + "\n" +
+              "Active presence: " + presenceCount);
+      });
+    });
   });
+  closeAdminPopupMenu();
 }
 
-function wireAdminButtons() {
-  function on(id, fn) {
-    const el = document.getElementById(id);
-    if (el) el.onclick = fn;
+// ─────────────────────────────────────────────
+//  UI Events
+// ─────────────────────────────────────────────
+
+document.getElementById("login-button").addEventListener("click", login);
+document.getElementById("settings-icon").addEventListener("click", openSettings);
+document.getElementById("settings-close").addEventListener("click", closeSettings);
+document.getElementById("settings-save").addEventListener("click", saveSettings);
+document.getElementById("settings-id-copy").addEventListener("click", copyIdToClipboard);
+
+document.getElementById("send-button").addEventListener("click", () => {
+  if (currentUser && checkMessageRate()) {
+    sendMessage();
+    addMessageTimestamp();
   }
-  on("admin-close",           closeAdminPanel);
-  on("admin-delete-msg",      adminDeleteMessage);
-  on("admin-delete-all-msgs", adminDeleteAllMessages);
-  on("admin-delete-user",     adminDeleteUser);
-  on("admin-block-device",    adminBlockDevice);
-  on("admin-mute-user",       adminMuteUser);
-  on("admin-broadcast",       adminBroadcast);
-  on("admin-view-id",         adminViewId);
-  on("admin-side-close",      hideAdminPanel);
-  on("asb-emergency-clear",   asbEmergencyClear);
-  on("asb-nuke",              asbNuke);
-  on("asb-del-all-msgs",      asbDeleteAllMessages);
-  on("asb-del-old",           asbDeleteOldMessages);
-  on("asb-del-profiles",      asbDeleteProfiles);
-  on("asb-del-presence",      asbDeletePresence);
-  on("asb-list-users",        asbListUsers);
-  on("asb-reset-id",          asbResetId);
-  on("asb-unban-user",        asbUnbanUser);
-  on("asb-unmute-user",       asbUnmuteUser);
-  on("asb-unblock-device",    asbUnblockDevice);
-  on("asb-broadcast",         asbBroadcast);
-  on("asb-announce",          asbAnnounce);
-  on("asb-run-cleanup",       asbRunCleanup);
-  on("asb-firebase-stats",    asbFirebaseStats);
-}
+});
 
-// ─────────────────────────────────────────────
-//  Friends persistence
-// ─────────────────────────────────────────────
-function friendsKey(u) { return "dl_friends_" + u; }
-
-function loadFriends(username) {
-  try { return JSON.parse(lsGet(friendsKey(username))) || []; }
-  catch(_) { return []; }
-}
-
-function persistFriend(username, friendName) {
-  const list = loadFriends(username);
-  if (list.includes(friendName)) return false;
-  list.push(friendName);
-  lsSet(friendsKey(username), JSON.stringify(list));
-  return true;
-}
-
-function removeFriend(username, friendName) {
-  const list = loadFriends(username).filter(n => n !== friendName);
-  lsSet(friendsKey(username), JSON.stringify(list));
-}
-
-// ─────────────────────────────────────────────
-//  Unread badge helpers
-// ─────────────────────────────────────────────
-function setBadge(channelKey, count) {
-  const el = document.querySelector(`[data-channel-key="${channelKey}"]`);
-  if (!el) return;
-  let badge = el.querySelector(".unread-badge");
-  if (count > 0) {
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.className = "unread-badge";
-      el.appendChild(badge);
+document.getElementById("message-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    if (currentUser && checkMessageRate()) {
+      sendMessage();
+      addMessageTimestamp();
     }
-    badge.textContent = count > 99 ? "99+" : count;
-  } else {
-    if (badge) badge.remove();
   }
-}
+  if (e.key === "@") {
+    handleMentionStart();
+  }
+});
 
-function lastSeenKey(channelKey) {
-  return "dl_seen_" + currentUser + "_" + channelKey;
-}
+document.getElementById("upload-button").addEventListener("click", () => {
+  document.getElementById("file-input").click();
+});
 
-function markChannelRead(channelKey) {
-  lsSet(lastSeenKey(channelKey), Date.now().toString());
-  window._badgeCounts[channelKey] = 0;
-  setBadge(channelKey, 0);
-}
+document.getElementById("file-input").addEventListener("change", handleFileUpload);
 
-// Watch a channel and update its unread badge in real-time.
-function watchUnreads(channelKey) {
-  if (watchingChannels[channelKey]) return;
-  watchingChannels[channelKey] = true;
+// Admin popup menu events
+document.getElementById("admin-popup-close").addEventListener("click", closeAdminPopupMenu);
 
-  db.ref("messages/" + channelKey).orderByChild("ts").on("child_added", snap => {
-    if (channelKey === currentChannel) { markChannelRead(channelKey); return; }
-    const msg = snap.val();
-    if (!msg) return;
-    const lastSeen = parseInt(lsGet(lastSeenKey(channelKey)) || "0", 10);
-    if (msg.ts > lastSeen && msg.user !== currentUser) {
-      window._badgeCounts[channelKey] = (window._badgeCounts[channelKey] || 0) + 1;
-      setBadge(channelKey, window._badgeCounts[channelKey]);
-    }
-  });
-}
-
-// ─────────────────────────────────────────────
-//  Default PFP
-// ─────────────────────────────────────────────
-function defaultPfp(letter) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-    <rect width="64" height="64" fill="#3a3c43"/>
-    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-      fill="#b9bbbe" font-size="26" font-family="Arial">${letter}</text>
-  </svg>`;
-  return "data:image/svg+xml;base64," + btoa(svg);
-}
-
-function applyUserToUI() {
-  document.getElementById("user-name").textContent = currentUser;
-  document.getElementById("user-pfp").src =
-    currentPfp || defaultPfp(currentUser.charAt(0).toUpperCase());
-}
+document.getElementById("apop-emergency-clear").addEventListener("click", asbEmergencyClear);
+document.getElementById("apop-nuke").addEventListener("click", asbNuke);
+document.getElementById("apop-del-all-msgs").addEventListener("click", asbDeleteAllMessages);
+document.getElementById("apop-del-old").addEventListener("click", asbDeleteOldMessages);
+document.getElementById("apop-del-profiles").addEventListener("click", asbDeleteProfiles);
+document.getElementById("apop-del-presence").addEventListener("click", asbDeletePresence);
+document.getElementById("apop-list-users").addEventListener("click", asbListUsers);
+document.getElementById("apop-reset-id").addEventListener("click", asbResetId);
+document.getElementById("apop-unban-user").addEventListener("click", asbUnbanUser);
+document.getElementById("apop-unmute-user").addEventListener("click", asbUnmuteUser);
+document.getElementById("apop-unblock-device").addEventListener("click", asbUnblockDevice);
+document.getElementById("apop-broadcast").addEventListener("click", asbBroadcast);
+document.getElementById("apop-announce").addEventListener("click", asbAnnounce);
+document.getElementById("apop-run-cleanup").addEventListener("click", asbRunCleanup);
+document.getElementById("apop-firebase-stats").addEventListener("click", asbFirebaseStats);
 
 // ─────────────────────────────────────────────
-//  Login
+//  Login & Auth
 // ─────────────────────────────────────────────
-function handleLogin() {
-  const u = document.getElementById("login-username").value.trim();
-  const p = document.getElementById("login-password").value.trim();
-  if (!u) return;
 
-  const fp = getDeviceFingerprint();
+function login() {
+  const username = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value.trim();
 
-  checkDeviceBlocked(fp, blocked => {
+  if (!username || !password) {
+    alert("Please enter both username and password.");
+    return;
+  }
+
+  checkDeviceBlocked(getDeviceFingerprint(), blocked => {
     if (blocked) {
-      document.getElementById("login-username").value = "";
-      document.getElementById("login-password").value = "";
-      alert("This device has been blocked from Discord Lite+.");
+      alert("Your device has been blocked from this app. Contact an administrator.");
       return;
     }
 
-    db.ref("banned/" + u).once("value", banSnap => {
-      if (banSnap.val()) {
+    db.ref("banned/" + username).once("value", snap => {
+      if (snap.val()) {
         alert("This account has been banned.");
-        document.getElementById("login-username").value = "";
-        document.getElementById("login-password").value = "";
         return;
       }
 
-      db.ref("muted/" + u).once("value", muteSnap => {
-        window._isMuted = !!muteSnap.val();
-      });
-
-      currentUser     = u;
-      currentPassword = p;
-      lsSet("dl_username", u);
-      lsSet("dl_password", p);
-      currentPfp = lsGet("dl_pfp_" + u) || null;
-      if (currentPfp) profileCache[u] = currentPfp;
-
-      isAdmin = (u === ADMIN_USER && p === ADMIN_PASS);
-      if (isAdmin) {
-        setTimeout(showAdminPanel, 300);
-      }
-
-      db.ref("profiles/" + u + "/deviceFp").set(fp);
+      currentUser = username;
+      currentPassword = password;
+      loadOrCreateId(username, password);
 
       document.getElementById("login-overlay").style.display = "none";
-      applyUserToUI();
-      applySettings();
-      loadOrCreateId(u, p);
-      renderAllFriends(u);
+      document.getElementById("user-name").textContent = username;
+      document.getElementById("user-pfp").src = lsGet("dl_pfp_" + username) || "";
 
-      ["general", "gaming", "random"].forEach(ch => watchUnreads(ch));
-      listenForDMInvites();
-      runCleanup();
+      // Check if admin
+      if (username === ADMIN_USER && password === ADMIN_PASS) {
+        isAdmin = true;
+        document.getElementById("settings-icon").textContent = "⚙⚡";
+        document.getElementById("settings-icon").addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleAdminPopupMenu();
+        });
+      }
+
       loadMessages(currentChannel);
+      watchPresence();
+      watchFriends();
+      loadFriendsList();
     });
   });
 }
 
-function initUser() {
-  document.getElementById("login-overlay").style.display = "flex";
-}
+// ─────────────────────────────────────────────
+//  Message Handling
+// ─────────────────────────────────────────────
 
-// ─────────────────────────────────────────────
-//  Settings
-// ─────────────────────────────────────────────
-function applySettings() {
-  const bg     = lsGet("dl_bgColor");
-  const dmPref = lsGet("dl_dmPref");
-  if (bg) {
-    document.body.style.backgroundColor = bg;
-    document.getElementById("main").style.backgroundColor = bg;
-    document.getElementById("sidebar").style.backgroundColor = bg;
-    document.getElementById("sidebar-inner").style.backgroundColor = bg;
-    document.getElementById("bg-picker").value = bg;
+function sendMessage() {
+  const input = document.getElementById("message-input");
+  let text = input.value.trim();
+
+  if (!text && !currentVideoData) {
+    return;
   }
-  if (dmPref) document.getElementById("dm-pref").value = dmPref;
-  if (currentUser) applyUserToUI();
-}
 
-function saveSettings() {
-  const bg     = document.getElementById("bg-picker").value;
-  const dmPref = document.getElementById("dm-pref").value;
-  const pfpFile = document.getElementById("pfp-input").files[0];
-  lsSet("dl_bgColor", bg);
-  lsSet("dl_dmPref", dmPref);
-  if (pfpFile) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      lsSet("dl_pfp_" + currentUser, e.target.result);
-      currentPfp = e.target.result;
-      saveProfilePfp(e.target.result);
-      applySettings();
-      closeSettings();
-    };
-    reader.readAsDataURL(pfpFile);
-  } else {
-    applySettings();
-    closeSettings();
-  }
-}
-
-function openSettings()  { document.getElementById("settings-overlay").style.display = "flex"; }
-function closeSettings() { document.getElementById("settings-overlay").style.display = "none"; }
-
-// ─────────────────────────────────────────────
-//  DM helpers
-// ─────────────────────────────────────────────
-function dmChannelName(a, b) {
-  return "dm_" + [a, b].sort().join("_");
-}
-
-function sendDMInvite(toUser) {
-  const channelKey = dmChannelName(currentUser, toUser);
-  db.ref("dmInvites/" + toUser + "/" + channelKey).set({
-    from: currentUser,
+  const msg = {
+    user: currentUser,
+    type: currentVideoData ? "video" : "text",
     ts: Date.now()
-  });
-}
+  };
 
-function listenForDMInvites() {
-  db.ref("dmInvites/" + currentUser).on("child_added", snap => {
-    const data = snap.val();
-    if (!data) return;
-    const fromUser = data.from;
-    const added = persistFriend(currentUser, fromUser);
-    if (added) renderFriendEntry(fromUser);
-    snap.ref.remove();
-  });
-}
-
-// ─────────────────────────────────────────────
-//  AUTO-CLEANUP
-// ─────────────────────────────────────────────
-const CLEANUP_MSG_TTL  = 24 * 60 * 60 * 1000;
-const CLEANUP_DM_TTL   = 48 * 60 * 60 * 1000;
-const CLEANUP_USER_TTL = 72 * 60 * 60 * 1000;
-const STATIC_CHANNELS  = ["general", "gaming", "random"];
-
-function touchPresence() {
-  if (!currentUser) return;
-  db.ref("presence/" + currentUser).set({ ts: Date.now() });
-}
-
-function purgeOldMessagesInChannel(channel) {
-  const cutoff = Date.now() - CLEANUP_MSG_TTL;
-  db.ref("messages/" + channel).once("value", snap => {
-    const data = snap.val();
-    if (!data) return;
-    const updates = {};
-    Object.entries(data).forEach(([key, msg]) => {
-      if ((msg.ts || 0) < cutoff) updates[key] = null;
-    });
-    if (Object.keys(updates).length) {
-      db.ref("messages/" + channel).update(updates);
-    }
-  });
-}
-
-function purgeIdleDMChannels() {
-  const cutoff = Date.now() - CLEANUP_DM_TTL;
-  db.ref("messages").once("value", snap => {
-    const data = snap.val();
-    if (!data) return;
-    Object.entries(data).forEach(([channel, msgs]) => {
-      if (!channel.startsWith("dm_")) return;
-      const messages = Object.values(msgs || {});
-      if (!messages.length) { db.ref("messages/" + channel).remove(); return; }
-      const latest = Math.max(...messages.map(m => m.ts || 0));
-      if (latest < cutoff) {
-        db.ref("messages/" + channel).remove();
-      }
-    });
-  });
-}
-
-function purgeStaleUsers() {
-  const cutoff = Date.now() - CLEANUP_USER_TTL;
-  db.ref("presence").once("value", snap => {
-    const data = snap.val();
-    if (!data) return;
-    Object.entries(data).forEach(([user, record]) => {
-      if ((record.ts || 0) < cutoff) {
-        db.ref("presence/" + user).remove();
-        db.ref("dmInvites/" + user).remove();
-      }
-    });
-  });
-}
-
-function runCleanup() {
-  touchPresence();
-  setInterval(touchPresence, 10 * 60 * 1000);
-  STATIC_CHANNELS.forEach(purgeOldMessagesInChannel);
-  loadFriends(currentUser).forEach(friend => {
-    purgeOldMessagesInChannel(dmChannelName(currentUser, friend));
-  });
-  purgeIdleDMChannels();
-  purgeStaleUsers();
-}
-
-// ─────────────────────────────────────────────
-//  Render friend entry
-// ─────────────────────────────────────────────
-function renderFriendEntry(name) {
-  const channelKey = dmChannelName(currentUser, name);
-
-  const div = document.createElement("div");
-  div.className = "friend";
-  div.setAttribute("data-channel-key", channelKey);
-  div.setAttribute("data-friend-name", name);
-
-  const label = document.createElement("span");
-  label.className = "friend-label has-id-tooltip";
-  label.style.position = "relative";
-  label.textContent = name;
-
-  const friendTooltip = document.createElement("span");
-  friendTooltip.className = "id-tooltip";
-  friendTooltip.textContent = "loading…";
-  label.appendChild(friendTooltip);
-  label.addEventListener("mouseenter", () => {
-    fetchUserId(name, id => { friendTooltip.textContent = "ID: " + id; });
-  }, { once: true });
-
-  const del = document.createElement("button");
-  del.className = "friend-delete";
-  del.title = "Remove DM";
-  del.textContent = "×";
-  del.onclick = e => { e.stopPropagation(); deleteDM(name); };
-
-  div.appendChild(label);
-  div.appendChild(del);
-  div.onclick = () => openDM(name);
-
-  document.getElementById("friends-list").appendChild(div);
-  watchUnreads(channelKey);
-}
-
-function renderAllFriends(username) {
-  document.getElementById("friends-list").innerHTML = "";
-  loadFriends(username).forEach(renderFriendEntry);
-}
-
-// ─────────────────────────────────────────────
-//  Open / Delete DM
-// ─────────────────────────────────────────────
-function openDM(friendName) {
-  currentChannel = dmChannelName(currentUser, friendName);
-  document.getElementById("header").textContent = "@" + friendName;
-
-  document.querySelectorAll(".friend").forEach(f => f.classList.remove("active-friend"));
-  document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
-
-  const friendEl = document.querySelector(`[data-friend-name="${friendName}"]`);
-  if (friendEl) friendEl.classList.add("active-friend");
-
-  loadMessages(currentChannel);
-}
-
-function deleteDM(friendName) {
-  removeFriend(currentUser, friendName);
-  const el = document.querySelector(`[data-friend-name="${friendName}"]`);
-  if (el) el.remove();
-
-  const dmKey = dmChannelName(currentUser, friendName);
-  if (currentChannel === dmKey) {
-    currentChannel = "general";
-    document.getElementById("header").textContent = "#general";
-    document.querySelector('[data-channel="general"]').classList.add("active-channel");
-    loadMessages("general");
+  if (currentVideoData) {
+    msg.videoData = currentVideoData;
+    msg.videoFilename = currentVideoFilename;
+    currentVideoData = null;
+    currentVideoFilename = null;
+  } else {
+    msg.text = text;
   }
+
+  db.ref("messages/" + currentChannel).push(msg);
+  input.value = "";
+  document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
 }
 
-// ─────────────────────────────────────────────
-//  @mention rendering
-// ─────────────────────────────────────────────
-function renderTextWithMentions(text) {
-  const frag  = document.createDocumentFragment();
-  const parts = text.split(/(@\w+)/g);
-  parts.forEach(part => {
-    if (part.startsWith("@")) {
-      const span = document.createElement("span");
-      span.className = "mention-highlight";
-      span.textContent = part;
-      frag.appendChild(span);
-    } else {
-      frag.appendChild(document.createTextNode(part));
-    }
+function loadMessages(channel) {
+  currentChannel = channel;
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.innerHTML = "";
+  document.getElementById("header").textContent = "#" + channel;
+
+  db.ref("messages/" + channel).on("child_added", snap => {
+    const msg = snap.val();
+    const key = snap.key;
+    displayMessage(msg, key, channel);
   });
-  return frag;
 }
 
-function isMentionedInText(text) {
-  if (!currentUser) return false;
-  return new RegExp("@" + currentUser + "\\b", "i").test(text);
-}
-
-// ─────────────────────────────────────────────
-//  Profile PFP cache
-// ─────────────────────────────────────────────
-const profileCache = {};
-
-function getProfilePfp(username) {
-  if (!username) return defaultPfp("?");
-  if (profileCache[username]) {
-    return profileCache[username] === "none"
-      ? defaultPfp(username.charAt(0).toUpperCase())
-      : profileCache[username];
-  }
-  if (profileCache[username] === undefined) {
-    profileCache[username] = "pending";
-    db.ref("profiles/" + username + "/pfp").once("value", snap => {
-      const val = snap.val();
-      profileCache[username] = val || "none";
-      document.querySelectorAll(`.message-pfp[data-user="${username}"]`).forEach(el => {
-        el.src = val ? val : defaultPfp(username.charAt(0).toUpperCase());
-      });
-    });
-  }
-  return defaultPfp(username.charAt(0).toUpperCase());
-}
-
-function saveProfilePfp(pfpDataUrl) {
-  if (!currentUser) return;
-  if (pfpDataUrl) {
-    db.ref("profiles/" + currentUser + "/pfp").set(pfpDataUrl);
-    profileCache[currentUser] = pfpDataUrl;
-  }
-}
-
-// ─────────────────────────────────────────────
-//  Message rendering
-// ─────────────────────────────────────────────
-function appendMessage(msg, msgKey, msgChannel) {
-  const messages = document.getElementById("messages");
+function displayMessage(msg, key, channel) {
+  const messagesDiv = document.getElementById("messages");
   const row = document.createElement("div");
   row.className = "message-row";
-  if (msgKey)     row.setAttribute("data-msg-key", msgKey);
-  if (msgChannel) row.setAttribute("data-msg-channel", msgChannel);
-
-  if (msg.type === "text" && isMentionedInText(msg.text)) {
-    row.classList.add("mentioned");
-  }
 
   const pfp = document.createElement("img");
   pfp.className = "message-pfp";
-  pfp.setAttribute("data-user", msg.user);
-  pfp.src = getProfilePfp(msg.user);
+  pfp.src = lsGet("dl_pfp_" + msg.user) || "";
 
   const content = document.createElement("div");
   content.className = "message-content";
 
-  const name = document.createElement("span");
-  name.className = "message-username has-id-tooltip";
-  if (msg.user === ADMIN_USER) {
-    const crown = document.createElement("span");
-    crown.className = "admin-crown";
-    crown.textContent = "👑";
-    name.appendChild(crown);
-    name.appendChild(document.createTextNode(" "));
-  }
-  name.appendChild(document.createTextNode(msg.user + ": "));
-  const tooltip = document.createElement("span");
-  tooltip.className = "id-tooltip";
-  tooltip.textContent = "loading…";
-  name.appendChild(tooltip);
-  name.addEventListener("mouseenter", () => {
-    fetchUserId(msg.user, id => { tooltip.textContent = "ID: " + id; });
-  }, { once: true });
-  if (isAdmin && msg.user !== ADMIN_USER) {
-    name.style.cursor = "pointer";
-    name.addEventListener("click", e => {
-      e.stopPropagation();
-      const key = row.getAttribute("data-msg-key");
-      const ch  = row.getAttribute("data-msg-channel");
-      db.ref("profiles/" + msg.user + "/deviceFp").once("value", snap => {
-        openAdminPanel(msg.user, key, ch, snap.val());
-      });
+  const username = document.createElement("span");
+  username.className = "message-username has-id-tooltip";
+  username.textContent = msg.user;
+
+  username.addEventListener("mouseenter", () => {
+    fetchUserId(msg.user, id => {
+      const tooltip = username.querySelector(".id-tooltip") || document.createElement("span");
+      tooltip.className = "id-tooltip";
+      tooltip.textContent = id;
+      if (!username.contains(tooltip)) username.appendChild(tooltip);
     });
-  }
-  content.appendChild(name);
+  });
+
+  content.appendChild(username);
 
   if (msg.type === "text") {
-    const wrapper = document.createElement("span");
-    wrapper.className = "message-text";
-    wrapper.appendChild(renderTextWithMentions(msg.text));
-    content.appendChild(wrapper);
-  }
+    const text = document.createElement("span");
+    text.className = "message-text";
+    text.innerHTML = msg.text.replace(/@(\S+)/g, '<span class="mention-highlight">@$1</span>');
+    content.appendChild(text);
 
-  if (msg.type === "image") {
-    const local = mediaStore[msg.token];
-    if (local) {
-      const img = document.createElement("img");
-      img.className = "message-image";
-      img.src = local.url;
-      img.onclick = () => openImageModal(local.url);
-      content.appendChild(img);
-    } else {
-      const note = document.createElement("span");
-      note.className = "message-text";
-      note.style.color = "#72767d";
-      note.textContent = "🖼️ " + (msg.filename || "image") + " (shared from another session)";
-      content.appendChild(note);
+    if (msg.text.includes("@" + currentUser)) {
+      row.classList.add("mentioned");
     }
-  }
+  } else if (msg.type === "video") {
+    const videoWrapper = document.createElement("div");
+    videoWrapper.className = "message-video-thumb-wrapper";
 
-  if (msg.type === "video") {
-    const local = mediaStore[msg.token];
-    const wrap  = document.createElement("div");
-    wrap.className = "message-video-thumb-wrapper";
-    if (local && msg.thumbnail) {
-      const thumb = document.createElement("img");
-      thumb.className = "message-video-thumb";
-      thumb.src = msg.thumbnail;
-      const play = document.createElement("div");
-      play.className = "message-video-play";
-      play.textContent = "▶";
-      wrap.appendChild(thumb);
-      wrap.appendChild(play);
-      wrap.onclick = () => openVideoModal(local.url, msg.filename);
-      content.appendChild(wrap);
-    } else {
-      const note = document.createElement("span");
-      note.className = "message-text";
-      note.style.color = "#72767d";
-      note.textContent = "🎬 " + (msg.filename || "video") + " (shared from another session)";
-      content.appendChild(note);
-    }
-  }
+    const video = document.createElement("video");
+    video.src = msg.videoData;
+    video.controls = false;
 
-  if (msg.type === "file") {
-    const local = mediaStore[msg.token];
-    const card  = document.createElement("div");
-    card.className = "message-file-card";
-    const nameEl = document.createElement("div");
-    nameEl.className = "message-file-name";
-    nameEl.textContent = "📄 " + (msg.filename || "file");
-    card.appendChild(nameEl);
-    if (msg.size) {
-      const sizeEl = document.createElement("div");
-      sizeEl.className = "message-file-size";
-      sizeEl.textContent = (msg.size / 1024).toFixed(1) + " KB";
-      card.appendChild(sizeEl);
-    }
-    if (local) {
-      const btn = document.createElement("button");
-      btn.className = "message-file-download";
-      btn.textContent = "Download";
-      btn.onclick = () => {
-        const a = document.createElement("a");
-        a.href = local.url; a.download = msg.filename; a.click();
-      };
-      card.appendChild(btn);
-    } else {
-      const note = document.createElement("div");
-      note.style.cssText = "font-size:11px;color:#72767d;margin-top:2px;";
-      note.textContent = "Shared from another session";
-      card.appendChild(note);
-    }
-    content.appendChild(card);
+    const thumb = document.createElement("canvas");
+    thumb.className = "message-video-thumb";
+    thumb.width = 160;
+    thumb.height = 90;
+
+    const ctx = thumb.getContext("2d");
+    video.addEventListener("loadedmetadata", () => {
+      video.currentTime = video.duration / 2;
+    });
+    video.addEventListener("seeked", () => {
+      ctx.drawImage(video, 0, 0, 160, 90);
+    });
+
+    const play = document.createElement("div");
+    play.className = "message-video-play";
+    play.textContent = "▶";
+
+    videoWrapper.appendChild(thumb);
+    videoWrapper.appendChild(play);
+    videoWrapper.addEventListener("click", () => openVideoModal(msg.videoData, msg.videoFilename));
+
+    content.appendChild(videoWrapper);
   }
 
   row.appendChild(pfp);
   row.appendChild(content);
-  messages.appendChild(row);
-  messages.scrollTop = messages.scrollHeight;
+  messagesDiv.appendChild(row);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 // ─────────────────────────────────────────────
-//  Load messages
+//  Settings & UI
 // ─────────────────────────────────────────────
-let currentChannelRef = null;
 
-function loadMessages(channel) {
-  const messages = document.getElementById("messages");
-  messages.innerHTML = "";
-
-  if (currentChannelRef) {
-    currentChannelRef.off("child_added");
-    currentChannelRef = null;
-  }
-
-  const ref = db.ref("messages/" + channel).orderByChild("ts");
-  currentChannelRef = ref;
-
-  ref.on("child_added", snap => {
-    const msg = snap.val();
-    if (msg) appendMessage(msg, snap.key, channel);
-  });
-
-  markChannelRead(channel);
-}
-
-// ─────────────────────────────────────────────
-//  Send text
-// ─────────────────────────────────────────────
-function sendTextMessage() {
-  const input = document.getElementById("message-input");
-  const text  = input.value.trim();
-  if (!text) return;
-  if (window._isMuted) {
-    input.value = "";
-    const tmp = input.placeholder;
-    input.placeholder = "You are muted and cannot send messages.";
-    setTimeout(() => { input.placeholder = tmp; }, 3000);
-    return;
-  }
-  closeMentionDropdown();
-  db.ref("messages/" + currentChannel).push({
-    user: currentUser,
-    type: "text", text, ts: Date.now()
-  });
-  input.value = "";
-}
-
-// ─────────────────────────────────────────────
-//  @mention autocomplete
-// ─────────────────────────────────────────────
-let mentionDropdownActive = false;
-let mentionDropdownIndex  = -1;
-let mentionStart          = -1;
-
-function getMentionCandidates(query) {
-  return loadFriends(currentUser).filter(
-    n => n.toLowerCase().startsWith(query.toLowerCase())
-  );
-}
-
-function openMentionDropdown(candidates) {
-  const dd = document.getElementById("mention-dropdown");
-  dd.innerHTML = "";
-  if (!candidates.length) { closeMentionDropdown(); return; }
-
-  candidates.forEach(name => {
-    const opt = document.createElement("div");
-    opt.className = "mention-option";
-    opt.textContent = "@" + name;
-    opt.onmousedown = e => { e.preventDefault(); selectMention(name); };
-    dd.appendChild(opt);
-  });
-
-  dd.style.display = "block";
-  mentionDropdownActive = true;
-  mentionDropdownIndex  = -1;
-}
-
-function closeMentionDropdown() {
-  document.getElementById("mention-dropdown").style.display = "none";
-  mentionDropdownActive = false;
-  mentionDropdownIndex  = -1;
-}
-
-function updateDropdownSelection() {
-  document.querySelectorAll(".mention-option").forEach((o, i) =>
-    o.classList.toggle("selected", i === mentionDropdownIndex)
-  );
-}
-
-function selectMention(name) {
-  const input = document.getElementById("message-input");
-  const val   = input.value;
-  const after = val.slice(input.selectionEnd);
-  input.value = val.slice(0, mentionStart) + "@" + name + " " + after;
-  const pos = mentionStart + name.length + 2;
-  input.setSelectionRange(pos, pos);
-  closeMentionDropdown();
-  input.focus();
-}
-
-const msgInput = document.getElementById("message-input");
-
-msgInput.addEventListener("input", function() {
-  const val   = this.value;
-  const caret = this.selectionStart;
-  let i = caret - 1;
-  while (i >= 0 && val[i] !== " " && val[i] !== "\n") i--;
-  const wordStart = i + 1;
-  const word = val.slice(wordStart, caret);
-
-  if (word.startsWith("@")) {
-    mentionStart = wordStart;
-    openMentionDropdown(getMentionCandidates(word.slice(1)));
+function openSettings() {
+  if (isAdmin) {
+    toggleAdminPopupMenu();
   } else {
-    closeMentionDropdown();
-  }
-});
-
-msgInput.addEventListener("keydown", function(e) {
-  if (!mentionDropdownActive) {
-    if (e.key === "Enter") { e.preventDefault(); sendTextMessage(); }
-    return;
-  }
-  const opts = document.querySelectorAll(".mention-option");
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    mentionDropdownIndex = Math.min(mentionDropdownIndex + 1, opts.length - 1);
-    updateDropdownSelection();
-  } else if (e.key === "ArrowUp") {
-    e.preventDefault();
-    mentionDropdownIndex = Math.max(mentionDropdownIndex - 1, 0);
-    updateDropdownSelection();
-  } else if (e.key === "Tab" || e.key === "Enter") {
-    e.preventDefault();
-    if (mentionDropdownIndex >= 0 && opts[mentionDropdownIndex]) {
-      selectMention(opts[mentionDropdownIndex].textContent.slice(1));
-    } else if (e.key === "Enter") {
-      closeMentionDropdown();
-      sendTextMessage();
-    }
-  } else if (e.key === "Escape") {
-    closeMentionDropdown();
-  }
-});
-
-document.addEventListener("click", e => {
-  if (!document.getElementById("mention-dropdown").contains(e.target) &&
-      e.target.id !== "message-input") {
-    closeMentionDropdown();
-  }
-});
-
-// ─────────────────────────────────────────────
-//  File upload
-// ─────────────────────────────────────────────
-document.getElementById("upload-button").onclick = () =>
-  document.getElementById("file-input").click();
-
-document.getElementById("file-input").onchange = async e => {
-  for (const file of [...e.target.files]) await handleFileUpload(file);
-  e.target.value = "";
-};
-
-const mediaStore = {};
-
-function makeToken() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
-async function handleFileUpload(file) {
-  const url   = URL.createObjectURL(file);
-  const token = makeToken();
-  mediaStore[token] = { url, filename: file.name };
-
-  if (file.type.startsWith("image/")) {
-    sendImage(token, file.name);
-  } else if (file.type.startsWith("video/")) {
-    const thumb = await generateVideoThumbnail(file);
-    sendVideo(token, file.name, thumb);
-  } else {
-    sendFile(token, file.name, file.size);
+    document.getElementById("settings-overlay").style.display = "flex";
   }
 }
 
-function sendImage(token, filename) {
-  db.ref("messages/" + currentChannel).push({
-    user: currentUser, type: "image", token, filename, ts: Date.now()
-  });
-}
-function sendVideo(token, filename, thumbnail) {
-  db.ref("messages/" + currentChannel).push({
-    user: currentUser, type: "video", token, filename, thumbnail, ts: Date.now()
-  });
-}
-function sendFile(token, filename, size) {
-  db.ref("messages/" + currentChannel).push({
-    user: currentUser, type: "file", token, filename, size, ts: Date.now()
-  });
+function closeSettings() {
+  document.getElementById("settings-overlay").style.display = "none";
 }
 
-function generateVideoThumbnail(file) {
-  return new Promise(resolve => {
-    const video = document.createElement("video");
-    video.src = URL.createObjectURL(file);
-    video.currentTime = 0.1;
-    video.onloadeddata = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 160; canvas.height = 90;
-      canvas.getContext("2d").drawImage(video, 0, 0, 160, 90);
-      resolve(canvas.toDataURL("image/jpeg"));
+function saveSettings() {
+  const pfpInput = document.getElementById("pfp-input");
+  const bgColor = document.getElementById("bg-picker").value;
+  const dmPref = document.getElementById("dm-pref").value;
+
+  if (pfpInput.files.length > 0) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const pfpData = e.target.result;
+      lsSet("dl_pfp_" + currentUser, pfpData);
+      document.getElementById("user-pfp").src = pfpData;
     };
+    reader.readAsDataURL(pfpInput.files[0]);
+  }
+
+  if (bgColor) {
+    document.body.style.backgroundColor = bgColor;
+    lsSet("dl_bg_" + currentUser, bgColor);
+  }
+
+  db.ref("profiles/" + currentUser + "/dmPref").set(dmPref);
+  alert("Settings saved!");
+  closeSettings();
+}
+
+function copyIdToClipboard() {
+  const idDisplay = document.getElementById("settings-id-display");
+  const text = idDisplay.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("ID copied to clipboard!");
   });
 }
 
-function downloadBase64(data, filename) {
-  const a = document.createElement("a");
-  a.href = data; a.download = filename; a.click();
-}
-
-// ─────────────────────────────────────────────
-//  Video / Image modals
-// ─────────────────────────────────────────────
-function openVideoModal(data, filename) {
-  currentVideoData     = data;
-  currentVideoFilename = filename;
-  const player = document.getElementById("video-modal-player");
-  player.style.display = "block";
-  player.src = data;
+function openVideoModal(videoData, filename) {
+  document.getElementById("video-modal-player").src = videoData;
   document.getElementById("video-modal-filename").textContent = filename;
   document.getElementById("video-modal-overlay").style.display = "flex";
 }
 
-document.getElementById("video-modal-close").onclick = () => {
+document.getElementById("video-modal-close").addEventListener("click", () => {
   document.getElementById("video-modal-overlay").style.display = "none";
-  document.getElementById("video-modal-player").pause();
-};
-document.getElementById("video-modal-download").onclick = () =>
-  downloadBase64(currentVideoData, currentVideoFilename);
+});
 
-function openImageModal(data) {
-  document.getElementById("video-modal-player").style.display = "none";
-  document.getElementById("video-modal-filename").textContent = "Image";
-  document.getElementById("video-modal-overlay").style.display = "flex";
-
-  const img = document.createElement("img");
-  img.src = data;
-  img.style.cssText = "max-width:100%;max-height:70vh;border-radius:4px;";
-
-  const modal = document.getElementById("video-modal");
-  modal.insertBefore(img, document.getElementById("video-modal-download"));
-
-  document.getElementById("video-modal-close").onclick = () => {
-    img.remove();
-    document.getElementById("video-modal-overlay").style.display = "none";
-    document.getElementById("video-modal-close").onclick = () => {
-      document.getElementById("video-modal-overlay").style.display = "none";
-      document.getElementById("video-modal-player").pause();
-    };
-  };
-}
-
-// ─────────────────────────────────────────────
-//  Channel switching
-// ─────────────────────────────────────────────
-document.querySelectorAll(".channel").forEach(el => {
-  el.onclick = () => {
-    document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
-    document.querySelectorAll(".friend").forEach(f => f.classList.remove("active-friend"));
-    el.classList.add("active-channel");
-    currentChannel = el.getAttribute("data-channel");
-    document.getElementById("header").textContent = "#" + currentChannel;
-    loadMessages(currentChannel);
-  };
+document.getElementById("video-modal-download").addEventListener("click", () => {
+  const video = document.getElementById("video-modal-player");
+  const a = document.createElement("a");
+  a.href = video.src;
+  a.download = document.getElementById("video-modal-filename").textContent;
+  a.click();
 });
 
 // ─────────────────────────────────────────────
-//  Add friend / start DM
+//  File & Video Upload
 // ─────────────────────────────────────────────
-document.getElementById("add-friend-button").onclick = () => {
-  const input = document.getElementById("add-friend-input");
-  const name  = input.value.trim();
-  if (!name || name === currentUser) { input.value = ""; return; }
 
-  const added = persistFriend(currentUser, name);
-  if (added) {
-    renderFriendEntry(name);
-    sendDMInvite(name);
+function handleFileUpload(e) {
+  const files = e.target.files;
+  for (let file of files) {
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const data = evt.target.result;
+      if (file.type.startsWith("video/")) {
+        currentVideoData = data;
+        currentVideoFilename = file.name;
+        alert("Video selected: " + file.name + "\nClick Send to upload.");
+      } else if (file.type.startsWith("image/")) {
+        const msg = {
+          user: currentUser,
+          type: "image",
+          imageData: data,
+          ts: Date.now()
+        };
+        db.ref("messages/" + currentChannel).push(msg);
+      } else {
+        const msg = {
+          user: currentUser,
+          type: "file",
+          fileName: file.name,
+          fileSize: file.size,
+          fileData: data,
+          ts: Date.now()
+        };
+        db.ref("messages/" + currentChannel).push(msg);
+      }
+    };
+    reader.readAsDataURL(file);
   }
-  input.value = "";
-};
-
-document.getElementById("add-friend-input").onkeydown = e => {
-  if (e.key === "Enter") document.getElementById("add-friend-button").click();
-};
-
-// ─────────────────────────────────────────────
-//  Init
-// ─────────────────────────────────────────────
-function safeOn(id, fn) {
-  const el = document.getElementById(id);
-  if (el) el.onclick = fn;
-  else console.warn("Element not found:", id);
+  e.target.value = "";
 }
 
-function init() {
-  wireAdminButtons();
+// ─────────────────────────────────────────────
+//  Friends / DMs
+// ─────────────────────────────────────────────
 
-  safeOn("login-button",    handleLogin);
-  safeOn("send-button",     sendTextMessage);
-  safeOn("settings-icon",   openSettings);
-  safeOn("settings-close",  closeSettings);
-  safeOn("settings-save",   saveSettings);
+function loadFriendsList() {
+  const list = document.getElementById("friends-list");
+  list.innerHTML = "";
 
-  safeOn("settings-id-copy", () => {
-    if (!currentUserId) return;
-    navigator.clipboard.writeText(currentUserId).then(() => {
-      const btn = document.getElementById("settings-id-copy");
-      if (!btn) return;
-      const orig = btn.textContent;
-      btn.textContent = "Copied!";
-      setTimeout(() => { btn.textContent = orig; }, 1500);
-    }).catch(() => {
-      const el = document.getElementById("settings-id-display");
-      if (!el) return;
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      window.getSelection().removeAllRanges();
-      window.getSelection().addRange(range);
-    });
+  db.ref("dmInvites/" + currentUser).on("child_added", snap => {
+    const from = snap.key;
+    addFriendToList(from, list);
+  });
+}
+
+function addFriendToList(friend, list) {
+  const item = document.createElement("div");
+  item.className = "friend";
+  item.innerHTML = '<span class="friend-label">' + friend + '</span>';
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "friend-delete";
+  deleteBtn.textContent = "✕";
+  deleteBtn.addEventListener("click", () => {
+    db.ref("dmInvites/" + currentUser + "/" + friend).remove();
+    item.remove();
   });
 
-  const loginU = document.getElementById("login-username");
-  const loginP = document.getElementById("login-password");
-  if (loginU) loginU.onkeydown = e => { if (e.key === "Enter") handleLogin(); };
-  if (loginP) loginP.onkeydown = e => { if (e.key === "Enter") handleLogin(); };
+  item.appendChild(deleteBtn);
+  item.addEventListener("click", () => {
+    openDM(friend);
+  });
 
-  initUser();
-  applySettings();
+  list.appendChild(item);
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  setTimeout(init, 0);
+function openDM(friend) {
+  currentChannel = "dm_" + [currentUser, friend].sort().join("_");
+  document.getElementById("header").textContent = "@" + friend;
+  loadMessages(currentChannel);
 }
+
+document.getElementById("add-friend-button").addEventListener("click", () => {
+  const input = document.getElementById("add-friend-input");
+  const friend = input.value.trim();
+
+  if (!friend) return;
+
+  db.ref("dmInvites/" + friend + "/" + currentUser).set({ ts: Date.now() });
+  input.value = "";
+  alert("DM request sent to " + friend);
+});
+
+// ─────────────────────────────────────────────
+//  Presence & Unread
+// ─────────────────────────────────────────────
+
+function watchPresence() {
+  db.ref("presence/" + currentUser).set({ lastSeen: Date.now() });
+  setInterval(() => {
+    db.ref("presence/" + currentUser).set({ lastSeen: Date.now() });
+  }, 30000);
+}
+
+function watchFriends() {
+  // Listeners for unread badges would go here
+}
+
+function handleMentionStart() {
+  const input = document.getElementById("message-input");
+  const text = input.value;
+  const lastAtIndex = text.lastIndexOf("@");
+
+  if (lastAtIndex === -1 || (lastAtIndex > 0 && text[lastAtIndex - 1] !== " ")) {
+    return;
+  }
+
+  db.ref("profiles").once("value", snap => {
+    const users = Object.keys(snap.val() || {});
+    const dropdown = document.getElementById("mention-dropdown");
+    dropdown.innerHTML = "";
+
+    users.forEach(user => {
+      const option = document.createElement("div");
+      option.className = "mention-option";
+      option.textContent = "@" + user;
+      option.addEventListener("click", () => {
+        const before = text.substring(0, lastAtIndex);
+        input.value = before + "@" + user + " ";
+        dropdown.style.display = "none";
+      });
+      dropdown.appendChild(option);
+    });
+
+    if (users.length > 0) {
+      dropdown.style.display = "block";
+    }
+  });
+}
+
+document.getElementById("message-input").addEventListener("blur", () => {
+  setTimeout(() => {
+    document.getElementById("mention-dropdown").style.display = "none";
+  }, 100);
+});
+
+// ─────────────────────────────────────────────
+//  Channel Switching
+// ─────────────────────────────────────────────
+
+document.querySelectorAll(".channel").forEach(ch => {
+  ch.addEventListener("click", (e) => {
+    document.querySelectorAll(".channel").forEach(c => c.classList.remove("active-channel"));
+    e.currentTarget.classList.add("active-channel");
+    const channel = e.currentTarget.dataset.channelKey;
+    loadMessages(channel);
+  });
+});
+
+// Close admin menu when clicking outside
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("admin-popup-menu");
+  const settingsIcon = document.getElementById("settings-icon");
+  if (!menu.contains(e.target) && !settingsIcon.contains(e.target)) {
+    closeAdminPopupMenu();
+  }
+});
+
+// Load background color if saved
+const savedBg = lsGet("dl_bg_" + (currentUser || "default"));
+if (savedBg) {
+  document.body.style.backgroundColor = savedBg;
+}
+
   </script>
 </body>
 </html>
