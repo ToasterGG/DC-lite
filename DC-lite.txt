@@ -16,7 +16,7 @@
 
     /* ── Sidebar ── */
     #sidebar { width: 260px; background-color: #2b2d31; display: flex; flex-direction: column; }
-    #sidebar-inner { flex: 1; display: flex; flex-direction: column; padding: 8px; gap: 10px; }
+    #sidebar-inner { flex: 1; display: flex; flex-direction: column; padding: 8px; gap: 10px; overflow-y: auto; }
 
     .sidebar-section-title {
       font-size: 12px; text-transform: uppercase; color: #b9bbbe; margin-bottom: 4px;
@@ -93,7 +93,7 @@
     /* ── User bar ── */
     #user-bar {
       padding: 6px 8px; background-color: #232428; border-top: 1px solid #1e1f22;
-      display: flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
     }
     #user-pfp {
       width: 28px; height: 28px; border-radius: 50%; background-color: #3a3c43;
@@ -300,37 +300,43 @@
       display: none; font-weight: 600;
     }
 
-    /* ── Admin popup menu ── */
+    /* ── Admin popup menu ── PROPER STYLING */
     #admin-popup-menu {
       position: fixed; right: 20px; top: 60px; background-color: #2b2d31;
-      border: 1px solid #ed4245; border-radius: 8px; padding: 0;
-      box-shadow: 0 0 30px rgba(237, 66, 69, 0.25); z-index: 2000;
-      display: none; flex-direction: column; min-width: 240px; max-height: 80vh;
+      border: 2px solid #ed4245; border-radius: 8px; padding: 0;
+      box-shadow: 0 0 30px rgba(237, 66, 69, 0.4); z-index: 2000;
+      display: none; flex-direction: column; width: 280px; max-height: 85vh;
       overflow-y: auto;
     }
-    #admin-popup-menu.open { display: flex; }
+    #admin-popup-menu.open { display: flex !important; }
     #admin-popup-header {
-      padding: 12px 14px; border-bottom: 1px solid #ed424540;
+      padding: 14px 16px; border-bottom: 2px solid #ed424550;
       display: flex; justify-content: space-between; align-items: center;
-      font-weight: 600; color: #ed4245; font-size: 14px;
+      font-weight: 700; color: #ed4245; font-size: 14px; flex-shrink: 0;
     }
     #admin-popup-close {
-      cursor: pointer; font-size: 18px; color: #b9bbbe;
+      cursor: pointer; font-size: 20px; color: #b9bbbe; flex-shrink: 0;
     }
-    #admin-popup-close:hover { color: #ffffff; }
+    #admin-popup-close:hover { color: #ed4245; }
     .admin-popup-item {
-      padding: 10px 14px; border-bottom: 1px solid #202225;
-      cursor: pointer; color: #dcddde; font-size: 13px;
-      transition: background-color 0.15s;
+      padding: 12px 16px; border-bottom: 1px solid #202225;
+      cursor: pointer; color: #dcddde; font-size: 13px; font-weight: 500;
+      transition: all 0.1s;
+      display: flex; align-items: center; gap: 8px;
     }
     .admin-popup-item:last-child { border-bottom: none; }
-    .admin-popup-item:hover { background-color: #3a3c43; }
-    .admin-popup-item.danger { color: #ed4245; }
-    .admin-popup-item.danger:hover { background-color: rgba(237, 66, 69, 0.15); }
+    .admin-popup-item:hover { background-color: #3a3c43; transform: translateX(2px); }
+    .admin-popup-item.danger { color: #ff5e5e; }
+    .admin-popup-item.danger:hover { background-color: rgba(255, 94, 94, 0.15); }
     .admin-popup-item.warning { color: #f97316; }
     .admin-popup-item.warning:hover { background-color: rgba(249, 115, 22, 0.15); }
+    .admin-popup-section-label {
+      padding: 10px 16px 6px 16px; color: #72767d; font-size: 11px; text-transform: uppercase; 
+      font-weight: 700; letter-spacing: 0.5px; border-bottom: none; cursor: default;
+    }
+    .admin-popup-section-label:hover { background-color: transparent; transform: none; }
     .admin-popup-divider {
-      height: 1px; background-color: #202225; margin: 4px 0;
+      height: 1px; background-color: #202225; margin: 0; border: none;
     }
 
     /* ── Account ID in settings ── */
@@ -427,7 +433,6 @@
         <button id="send-button">Send</button>
       </div>
     </div>
-
   </div>
 
   <input id="file-input" type="file" multiple>
@@ -491,6 +496,7 @@
 
   <div id="rate-limit-warning"></div>
 
+  <!-- ADMIN POPUP MENU -->
   <div id="admin-popup-menu">
     <div id="admin-popup-header">
       <span>⚡ Admin Console</span>
@@ -499,27 +505,29 @@
     <div class="admin-popup-divider"></div>
     <div class="admin-popup-item danger" id="apop-emergency-clear">🚨 CLEAR ALL DB NOW</div>
     <div class="admin-popup-divider"></div>
-    <div style="padding: 6px 14px; color: #72767d; font-size: 11px; text-transform: uppercase; font-weight: 600;">🗄️ Storage</div>
+    <div class="admin-popup-section-label">🗄️ Storage Management</div>
     <div class="admin-popup-item danger" id="apop-nuke">💣 Nuke ALL (keep Admin)</div>
     <div class="admin-popup-item danger" id="apop-del-all-msgs">🗑️ Delete all messages</div>
     <div class="admin-popup-item danger" id="apop-del-old">⏳ Delete msgs >1h old</div>
     <div class="admin-popup-item warning" id="apop-del-profiles">👤 Delete user profiles</div>
     <div class="admin-popup-item warning" id="apop-del-presence">🫥 Delete presence data</div>
     <div class="admin-popup-divider"></div>
-    <div style="padding: 6px 14px; color: #72767d; font-size: 11px; text-transform: uppercase; font-weight: 600;">👥 Users</div>
+    <div class="admin-popup-section-label">👥 User Management</div>
     <div class="admin-popup-item" id="apop-list-users">📋 List all users</div>
-    <div class="admin-popup-item" id="apop-reset-id">🔄 Reset a user's ID</div>
+    <div class="admin-popup-item" id="apop-check-duplicates">🔍 Check duplicates</div>
+    <div class="admin-popup-item" id="apop-reset-id">🔄 Reset user ID</div>
     <div class="admin-popup-item warning" id="apop-unban-user">✅ Unban a user</div>
     <div class="admin-popup-item warning" id="apop-unmute-user">🔊 Unmute a user</div>
-    <div class="admin-popup-item warning" id="apop-unblock-device">🔓 Unblock device FP</div>
+    <div class="admin-popup-item warning" id="apop-unblock-device">🔓 Unblock device</div>
+    <div class="admin-popup-item danger" id="apop-delete-all-accounts">💀 DELETE ALL ACCOUNTS</div>
     <div class="admin-popup-divider"></div>
-    <div style="padding: 6px 14px; color: #72767d; font-size: 11px; text-transform: uppercase; font-weight: 600;">📢 Broadcast</div>
+    <div class="admin-popup-section-label">📢 Communication</div>
     <div class="admin-popup-item" id="apop-broadcast">📣 Send broadcast</div>
     <div class="admin-popup-item" id="apop-announce">📌 Pin announcement</div>
     <div class="admin-popup-divider"></div>
-    <div style="padding: 6px 14px; color: #72767d; font-size: 11px; text-transform: uppercase; font-weight: 600;">🔧 Maintenance</div>
-    <div class="admin-popup-item" id="apop-run-cleanup">🧹 Run cleanup now</div>
-    <div class="admin-popup-item" id="apop-firebase-stats">📊 DB node counts</div>
+    <div class="admin-popup-section-label">🔧 Maintenance</div>
+    <div class="admin-popup-item" id="apop-run-cleanup">🧹 Run cleanup</div>
+    <div class="admin-popup-item" id="apop-firebase-stats">📊 DB stats</div>
   </div>
 
   <div id="watermark">made by Toby Ulliott</div>
@@ -553,25 +561,21 @@ let currentChannel       = "general";
 let currentVideoData     = null;
 let currentVideoFilename = null;
 
-// Tracks which channels already have an active unread listener
 const watchingChannels = {};
-
-// Initialise badge counts map once at the top level — avoids any TDZ issues
 window._badgeCounts = {};
 
-// Admin credentials (checked client-side; Firebase rules are the real gate)
 const ADMIN_USER = "Admin";
 const ADMIN_PASS = "bbecRa79";
 let isAdmin = false;
 
 // Rate limiting
-const MESSAGE_RATE_LIMIT = 2;     // Max 2 messages per minute
-const RATE_LIMIT_WINDOW = 60000;  // 1 minute in milliseconds
-const WARNING_THRESHOLD = 4;       // Show warning at 4 messages
-const MUTE_THRESHOLD = 6;          // Mute at 6 messages
-const MUTE_DURATION = 5 * 60 * 1000; // 5 minutes
+const MESSAGE_RATE_LIMIT = 2;
+const RATE_LIMIT_WINDOW = 60000;
+const WARNING_THRESHOLD = 4;
+const MUTE_THRESHOLD = 6;
+const MUTE_DURATION = 5 * 60 * 1000;
 
-let messageTimestamps = []; // Track message send times
+let messageTimestamps = [];
 let isMuted = false;
 let muteExpiresAt = null;
 
@@ -602,28 +606,22 @@ function checkMessageRate() {
   const now = Date.now();
   const cutoff = now - RATE_LIMIT_WINDOW;
   
-  // Remove old timestamps outside the window
   messageTimestamps = messageTimestamps.filter(ts => ts > cutoff);
-  
   const messageCount = messageTimestamps.length;
   
-  // Check if muted
   if (isUserMuted()) {
     showRateLimitWarning("🚫 You are muted for " + Math.ceil((muteExpiresAt - now) / 1000) + "s");
     return false;
   }
   
-  // Check thresholds
   if (messageCount >= MUTE_THRESHOLD) {
     isMuted = true;
     muteExpiresAt = now + MUTE_DURATION;
     document.getElementById("message-input").disabled = true;
     document.getElementById("send-button").disabled = true;
     document.getElementById("upload-button").disabled = true;
-    showRateLimitWarning("🚫 MUTED for 5 minutes - Message limit exceeded!");
-    setTimeout(() => {
-      isUserMuted();
-    }, MUTE_DURATION);
+    showRateLimitWarning("🚫 MUTED for 5 minutes!");
+    setTimeout(() => { isUserMuted(); }, MUTE_DURATION);
     return false;
   }
   
@@ -656,7 +654,7 @@ function hideRateLimitWarning() {
 }
 
 // ─────────────────────────────────────────────
-//  Account ID
+//  Account ID & Duplicate Detection
 // ─────────────────────────────────────────────
 let currentUserId   = null;
 let currentPassword = "";
@@ -689,13 +687,52 @@ function deriveIdFromCredentials(username, password) {
 
 function idKey(username) { return "dl_id_" + username; }
 
+function checkDuplicateUsername(username, callback) {
+  db.ref("profiles").once("value", snap => {
+    const profiles = snap.val() || {};
+    let count = 0;
+    let duplicateUsers = [];
+    Object.keys(profiles).forEach(u => {
+      if (u === username) {
+        count++;
+        duplicateUsers.push(u);
+      }
+    });
+    callback(count > 1 ? duplicateUsers : null);
+  });
+}
+
+function checkDuplicateId(id, callback) {
+  db.ref("profiles").once("value", snap => {
+    const profiles = snap.val() || {};
+    let count = 0;
+    let duplicateUsers = [];
+    Object.entries(profiles).forEach(([username, data]) => {
+      if (data.id === id) {
+        count++;
+        duplicateUsers.push(username);
+      }
+    });
+    callback(count > 1 ? duplicateUsers : null);
+  });
+}
+
 function loadOrCreateId(username, password) {
   const derivedId = deriveIdFromCredentials(username, password);
-  db.ref("profiles/" + username + "/id").once("value", snap => {
-    db.ref("profiles/" + username + "/id").set(derivedId);
-    lsSet(idKey(username), derivedId);
-    currentUserId = derivedId;
-    showIdInSettings(derivedId);
+  
+  // Check for duplicate ID
+  checkDuplicateId(derivedId, duplicates => {
+    if (duplicates) {
+      console.log("Duplicate ID detected for:", duplicates);
+      alert("Account error: Duplicate ID detected. Please contact admin.");
+      return;
+    }
+    
+    db.ref("profiles/" + username + "/id").set(derivedId, () => {
+      lsSet(idKey(username), derivedId);
+      currentUserId = derivedId;
+      showIdInSettings(derivedId);
+    });
   });
 }
 
@@ -707,7 +744,6 @@ function showIdInSettings(id) {
   display.textContent = id;
 }
 
-// ── ID cache for other users (fetched on demand for tooltips) ──
 const userIdCache = {};
 
 function fetchUserId(username, callback) {
@@ -765,59 +801,52 @@ function toggleAdminPopupMenu() {
 }
 
 // ─────────────────────────────────────────────
-//  Admin Popup Menu Actions
+//  Admin Actions
 // ─────────────────────────────────────────────
 
 function asbEmergencyClear() {
-  if (!confirm("EMERGENCY CLEAR\n\nThis will instantly delete ALL messages, presence, DM invites, blocked/banned/muted records, and user profiles (except Admin).\n\nPress OK to proceed.")) return;
+  if (!confirm("EMERGENCY CLEAR ALL DATA (except Admin)?\n\nThis is IRREVERSIBLE.")) return;
 
   db.ref("profiles/Admin").once("value", snap => {
     const adminProfile = snap.val();
-    const wipeNodes = ["messages", "presence", "dmInvites", "blocked", "banned", "muted", "dm_invites"];
+    const wipeNodes = ["messages", "presence", "dmInvites", "blocked", "banned", "muted"];
     const deletes = wipeNodes.map(node => db.ref(node).set(null));
 
     db.ref("profiles").once("value", profilesSnap => {
       const profiles = profilesSnap.val() || {};
-      const profileUpdates = {};
+      const updates = {};
       Object.keys(profiles).forEach(u => {
-        if (u !== "Admin") profileUpdates[u] = null;
+        if (u !== "Admin") updates[u] = null;
       });
-      if (Object.keys(profileUpdates).length) {
-        db.ref("profiles").update(profileUpdates);
-      }
+      if (Object.keys(updates).length) db.ref("profiles").update(updates);
     });
 
     Promise.all(deletes).then(() => {
-      if (adminProfile) {
-        db.ref("profiles/Admin").set(adminProfile);
-      }
-      alert("Done. All messages, presence, and user data wiped. Admin profile restored.");
+      if (adminProfile) db.ref("profiles/Admin").set(adminProfile);
+      alert("Done. Database cleared (Admin preserved).");
     });
   });
   closeAdminPopupMenu();
 }
 
 function asbNuke() {
-  if (!confirm("NUKE ALL FIREBASE DATA (except Admin account)?\nThis is permanent and cannot be undone.")) return;
-  if (!confirm("Are you absolutely sure? Type YES in the next prompt.")) return;
-  const check = prompt("Type YES to confirm total wipe:");
-  if (check !== "YES") { alert("Cancelled."); return; }
+  if (!confirm("NUKE ALL DATA (except Admin)?\n\nType YES in next prompt to confirm.")) return;
+  const check = prompt("Type YES to confirm:");
+  if (check !== "YES") return;
 
   db.ref("profiles/Admin").once("value", snap => {
     const adminProfile = snap.val();
     db.ref("/").set(null, () => {
-      if (adminProfile) {
-        db.ref("profiles/Admin").set(adminProfile);
-      }
-      alert("Done. All data wiped. Admin profile preserved.");
+      if (adminProfile) db.ref("profiles/Admin").set(adminProfile);
+      alert("Done. All data wiped. Admin restored.");
     });
   });
   closeAdminPopupMenu();
 }
 
 function asbDeleteAllMessages() {
-  if (!confirm("Delete ALL messages in ALL channels? Cannot be undone.")) return;
-  db.ref("messages").remove(() => alert("All messages deleted."));
+  if (!confirm("Delete ALL messages? Cannot undo.")) return;
+  db.ref("messages").remove();
   closeAdminPopupMenu();
 }
 
@@ -825,105 +854,152 @@ function asbDeleteOldMessages() {
   const cutoff = Date.now() - (60 * 60 * 1000);
   db.ref("messages").once("value", snap => {
     const data = snap.val();
-    if (!data) { alert("No messages found."); return; }
+    if (!data) { alert("No messages."); return; }
     let deleted = 0;
     const promises = [];
-    Object.entries(data).forEach(([channel, msgs]) => {
+    Object.entries(data).forEach(([ch, msgs]) => {
       if (!msgs) return;
       const updates = {};
       Object.entries(msgs).forEach(([key, msg]) => {
         if ((msg.ts || 0) < cutoff) { updates[key] = null; deleted++; }
       });
-      if (Object.keys(updates).length) {
-        promises.push(db.ref("messages/" + channel).update(updates));
-      }
+      if (Object.keys(updates).length) promises.push(db.ref("messages/" + ch).update(updates));
     });
-    Promise.all(promises).then(() => alert("Deleted " + deleted + " messages older than 1 hour."));
+    Promise.all(promises).then(() => alert("Deleted " + deleted + " messages >1h old."));
   });
   closeAdminPopupMenu();
 }
 
 function asbDeleteProfiles() {
-  if (!confirm("Delete ALL user profiles except Admin?")) return;
+  if (!confirm("Delete ALL user profiles (not Admin)?")) return;
   db.ref("profiles").once("value", snap => {
     const data = snap.val() || {};
     const updates = {};
     Object.keys(data).forEach(u => {
       if (u !== "Admin") updates[u] = null;
     });
-    db.ref("profiles").update(updates, () => alert("User profiles deleted (Admin preserved)."));
+    db.ref("profiles").update(updates);
+    alert("Profiles deleted.");
   });
   closeAdminPopupMenu();
 }
 
 function asbDeletePresence() {
-  if (!confirm("Delete all presence/heartbeat data?")) return;
-  db.ref("presence").remove(() => alert("Presence data cleared."));
+  if (!confirm("Delete presence data?")) return;
+  db.ref("presence").remove();
+  alert("Presence cleared.");
   closeAdminPopupMenu();
 }
 
 function asbListUsers() {
   db.ref("profiles").once("value", profilesSnap => {
     db.ref("presence").once("value", presenceSnap => {
-      const profiles  = Object.keys(profilesSnap.val() || {});
-      const presence  = Object.keys(presenceSnap.val() || {});
-      const all       = [...new Set([...profiles, ...presence])].sort();
-      if (!all.length) { alert("No users found in Firebase."); return; }
-      alert("Known users (" + all.length + "):\n" + all.join("\n"));
+      const profiles = Object.keys(profilesSnap.val() || {});
+      const presence = Object.keys(presenceSnap.val() || {});
+      const all = [...new Set([...profiles, ...presence])].sort();
+      if (!all.length) { alert("No users."); return; }
+      alert("Users (" + all.length + "):\n" + all.join("\n"));
     });
   });
   closeAdminPopupMenu();
 }
 
-function asbResetId() {
-  const username = prompt("Enter the username whose ID to reset:");
-  if (!username || !username.trim()) return;
-  const u = username.trim();
-  if (!confirm("Reset the ID for '" + u + "'?\nTheir old ID will be gone permanently.")) return;
-
-  let newId = String(Math.floor(Math.random() * 9) + 1);
-  for (let i = 0; i < 14; i++) newId += String(Math.floor(Math.random() * 10));
-
-  db.ref("profiles/" + u + "/id").set(newId, () => {
-    lsSet(idKey(u), newId);
-    alert("ID reset for " + u + " → " + newId);
+function asbCheckDuplicates() {
+  db.ref("profiles").once("value", snap => {
+    const profiles = snap.val() || {};
+    const usernames = Object.keys(profiles);
+    const ids = {};
+    let duplicates = [];
+    
+    // Check for duplicate usernames
+    const usernameCount = {};
+    usernames.forEach(u => {
+      usernameCount[u] = (usernameCount[u] || 0) + 1;
+    });
+    Object.entries(usernameCount).forEach(([u, count]) => {
+      if (count > 1) {
+        duplicates.push("Username '" + u + "' appears " + count + " times - DELETING BOTH");
+        db.ref("profiles/" + u).remove();
+      }
+    });
+    
+    // Check for duplicate IDs
+    usernames.forEach(u => {
+      const id = profiles[u].id;
+      if (!id) return;
+      if (ids[id]) {
+        duplicates.push("ID '" + id + "' shared by " + ids[id] + " & " + u);
+      } else {
+        ids[id] = u;
+      }
+    });
+    
+    if (duplicates.length === 0) {
+      alert("✅ No duplicates found!");
+    } else {
+      alert("⚠️ Duplicates found:\n" + duplicates.join("\n"));
+    }
   });
   closeAdminPopupMenu();
 }
 
-function asbUnbanUser() {
-  const username = prompt("Enter the username to unban:");
-  if (!username || !username.trim()) return;
+function asbResetId() {
+  const username = prompt("Username to reset ID:");
+  if (!username) return;
   const u = username.trim();
-  if (!confirm("Unban " + u + "?")) return;
+  if (!confirm("Reset ID for '" + u + "'?")) return;
 
-  db.ref("banned/" + u).remove(() => alert(u + " unbanned."));
+  let newId = String(Math.floor(Math.random() * 9) + 1);
+  for (let i = 0; i < 14; i++) newId += String(Math.floor(Math.random() * 10));
+
+  db.ref("profiles/" + u + "/id").set(newId);
+  alert("ID reset: " + newId);
+  closeAdminPopupMenu();
+}
+
+function asbUnbanUser() {
+  const username = prompt("Username to unban:");
+  if (!username) return;
+  db.ref("banned/" + username.trim()).remove();
+  alert("User unbanned.");
   closeAdminPopupMenu();
 }
 
 function asbUnmuteUser() {
-  const username = prompt("Enter the username to unmute:");
-  if (!username || !username.trim()) return;
-  const u = username.trim();
-  if (!confirm("Unmute " + u + "?")) return;
-
-  db.ref("muted/" + u).remove(() => alert(u + " unmuted."));
+  const username = prompt("Username to unmute:");
+  if (!username) return;
+  db.ref("muted/" + username.trim()).remove();
+  alert("User unmuted.");
   closeAdminPopupMenu();
 }
 
 function asbUnblockDevice() {
-  const fp = prompt("Enter the device fingerprint to unblock (format: fp_xxxxxxxx):");
-  if (!fp || !fp.trim()) return;
-  const f = fp.trim();
-  if (!confirm("Unblock device " + f + "?")) return;
+  const fp = prompt("Device fingerprint (fp_xxxxxxxx):");
+  if (!fp) return;
+  db.ref("blocked/" + fp.trim()).remove();
+  alert("Device unblocked.");
+  closeAdminPopupMenu();
+}
 
-  db.ref("blocked/" + f).remove(() => alert("Device " + f + " unblocked."));
+function asbDeleteAllAccounts() {
+  if (!confirm("DELETE ALL ACCOUNTS (except Admin)?\n\nThis is PERMANENT.")) return;
+  if (!confirm("Are you ABSOLUTELY SURE? Type YES to confirm:") && prompt("") !== "YES") return;
+
+  db.ref("profiles").once("value", snap => {
+    const profiles = snap.val() || {};
+    const updates = {};
+    Object.keys(profiles).forEach(u => {
+      if (u !== "Admin") updates[u] = null;
+    });
+    db.ref("profiles").update(updates);
+    alert("All accounts deleted (Admin preserved).");
+  });
   closeAdminPopupMenu();
 }
 
 function asbBroadcast() {
-  const text = prompt("Broadcast message (sent to #general, #gaming, #random):");
-  if (!text || !text.trim()) return;
+  const text = prompt("Broadcast message:");
+  if (!text) return;
   ["general", "gaming", "random"].forEach(ch => {
     db.ref("messages/" + ch).push({
       user: "📢 System",
@@ -932,15 +1008,15 @@ function asbBroadcast() {
       ts: Date.now()
     });
   });
+  alert("Broadcast sent.");
   closeAdminPopupMenu();
 }
 
 function asbAnnounce() {
-  const text = prompt("Announcement text:");
-  if (!text || !text.trim()) return;
-  db.ref("announcements").set({ text: text.trim(), ts: Date.now(), by: ADMIN_USER }, () => {
-    alert("Announcement pinned.");
-  });
+  const text = prompt("Announcement:");
+  if (!text) return;
+  db.ref("announcements").set({ text: text.trim(), ts: Date.now() });
+  alert("Announced.");
   closeAdminPopupMenu();
 }
 
@@ -948,22 +1024,18 @@ function asbRunCleanup() {
   const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
   db.ref("messages").once("value", snap => {
     const data = snap.val();
-    if (!data) { alert("No messages found."); return; }
+    if (!data) { alert("No messages."); return; }
     let deleted = 0;
     const promises = [];
-    Object.entries(data).forEach(([channel, msgs]) => {
+    Object.entries(data).forEach(([ch, msgs]) => {
       if (!msgs) return;
       const updates = {};
       Object.entries(msgs).forEach(([key, msg]) => {
         if ((msg.ts || 0) < oneDayAgo) { updates[key] = null; deleted++; }
       });
-      if (Object.keys(updates).length) {
-        promises.push(db.ref("messages/" + channel).update(updates));
-      }
+      if (Object.keys(updates).length) promises.push(db.ref("messages/" + ch).update(updates));
     });
-    Promise.all(promises).then(() => {
-      alert("Cleanup complete. Deleted " + deleted + " messages older than 24 hours.");
-    });
+    Promise.all(promises).then(() => alert("Deleted " + deleted + " msgs >24h old."));
   });
   closeAdminPopupMenu();
 }
@@ -982,10 +1054,7 @@ function asbFirebaseStats() {
       db.ref("presence").once("value", presenceSnap => {
         const presenceCount = Object.keys(presenceSnap.val() || {}).length;
         
-        alert("📊 Database Stats:\n" +
-              "Messages: " + msgCount + "\n" +
-              "Profiles: " + profileCount + "\n" +
-              "Active presence: " + presenceCount);
+        alert("Messages: " + msgCount + "\nProfiles: " + profileCount + "\nPresence: " + presenceCount);
       });
     });
   });
@@ -1017,9 +1086,6 @@ document.getElementById("message-input").addEventListener("keydown", e => {
       addMessageTimestamp();
     }
   }
-  if (e.key === "@") {
-    handleMentionStart();
-  }
 });
 
 document.getElementById("upload-button").addEventListener("click", () => {
@@ -1028,9 +1094,8 @@ document.getElementById("upload-button").addEventListener("click", () => {
 
 document.getElementById("file-input").addEventListener("change", handleFileUpload);
 
-// Admin popup menu events
+// Admin menu events
 document.getElementById("admin-popup-close").addEventListener("click", closeAdminPopupMenu);
-
 document.getElementById("apop-emergency-clear").addEventListener("click", asbEmergencyClear);
 document.getElementById("apop-nuke").addEventListener("click", asbNuke);
 document.getElementById("apop-del-all-msgs").addEventListener("click", asbDeleteAllMessages);
@@ -1038,10 +1103,12 @@ document.getElementById("apop-del-old").addEventListener("click", asbDeleteOldMe
 document.getElementById("apop-del-profiles").addEventListener("click", asbDeleteProfiles);
 document.getElementById("apop-del-presence").addEventListener("click", asbDeletePresence);
 document.getElementById("apop-list-users").addEventListener("click", asbListUsers);
+document.getElementById("apop-check-duplicates").addEventListener("click", asbCheckDuplicates);
 document.getElementById("apop-reset-id").addEventListener("click", asbResetId);
 document.getElementById("apop-unban-user").addEventListener("click", asbUnbanUser);
 document.getElementById("apop-unmute-user").addEventListener("click", asbUnmuteUser);
 document.getElementById("apop-unblock-device").addEventListener("click", asbUnblockDevice);
+document.getElementById("apop-delete-all-accounts").addEventListener("click", asbDeleteAllAccounts);
 document.getElementById("apop-broadcast").addEventListener("click", asbBroadcast);
 document.getElementById("apop-announce").addEventListener("click", asbAnnounce);
 document.getElementById("apop-run-cleanup").addEventListener("click", asbRunCleanup);
@@ -1056,44 +1123,53 @@ function login() {
   const password = document.getElementById("login-password").value.trim();
 
   if (!username || !password) {
-    alert("Please enter both username and password.");
+    alert("Username and password required.");
     return;
   }
 
-  checkDeviceBlocked(getDeviceFingerprint(), blocked => {
-    if (blocked) {
-      alert("Your device has been blocked from this app. Contact an administrator.");
+  // Check for duplicate username at login
+  checkDuplicateUsername(username, duplicates => {
+    if (duplicates && duplicates.length > 1) {
+      alert("ERROR: Duplicate usernames detected. Both accounts deleted.");
+      duplicates.forEach(u => db.ref("profiles/" + u).remove());
       return;
     }
 
-    db.ref("banned/" + username).once("value", snap => {
-      if (snap.val()) {
-        alert("This account has been banned.");
+    checkDeviceBlocked(getDeviceFingerprint(), blocked => {
+      if (blocked) {
+        alert("Device blocked.");
         return;
       }
 
-      currentUser = username;
-      currentPassword = password;
-      loadOrCreateId(username, password);
+      db.ref("banned/" + username).once("value", snap => {
+        if (snap.val()) {
+          alert("Account banned.");
+          return;
+        }
 
-      document.getElementById("login-overlay").style.display = "none";
-      document.getElementById("user-name").textContent = username;
-      document.getElementById("user-pfp").src = lsGet("dl_pfp_" + username) || "";
+        currentUser = username;
+        currentPassword = password;
+        loadOrCreateId(username, password);
 
-      // Check if admin
-      if (username === ADMIN_USER && password === ADMIN_PASS) {
-        isAdmin = true;
-        document.getElementById("settings-icon").textContent = "⚙⚡";
-        document.getElementById("settings-icon").addEventListener("click", (e) => {
-          e.stopPropagation();
-          toggleAdminPopupMenu();
-        });
-      }
+        document.getElementById("login-overlay").style.display = "none";
+        document.getElementById("user-name").textContent = username;
+        document.getElementById("user-pfp").src = lsGet("dl_pfp_" + username) || "";
 
-      loadMessages(currentChannel);
-      watchPresence();
-      watchFriends();
-      loadFriendsList();
+        if (username === ADMIN_USER && password === ADMIN_PASS) {
+          isAdmin = true;
+          document.getElementById("settings-icon").textContent = "⚙⚡";
+          document.getElementById("settings-icon").removeEventListener("click", openSettings);
+          document.getElementById("settings-icon").addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleAdminPopupMenu();
+          });
+        }
+
+        loadMessages(currentChannel);
+        watchPresence();
+        watchFriends();
+        loadFriendsList();
+      });
     });
   });
 }
@@ -1106,9 +1182,7 @@ function sendMessage() {
   const input = document.getElementById("message-input");
   let text = input.value.trim();
 
-  if (!text && !currentVideoData) {
-    return;
-  }
+  if (!text && !currentVideoData) return;
 
   const msg = {
     user: currentUser,
@@ -1161,10 +1235,13 @@ function displayMessage(msg, key, channel) {
 
   username.addEventListener("mouseenter", () => {
     fetchUserId(msg.user, id => {
-      const tooltip = username.querySelector(".id-tooltip") || document.createElement("span");
-      tooltip.className = "id-tooltip";
+      let tooltip = username.querySelector(".id-tooltip");
+      if (!tooltip) {
+        tooltip = document.createElement("span");
+        tooltip.className = "id-tooltip";
+        username.appendChild(tooltip);
+      }
       tooltip.textContent = id;
-      if (!username.contains(tooltip)) username.appendChild(tooltip);
     });
   });
 
@@ -1262,7 +1339,7 @@ function copyIdToClipboard() {
   const idDisplay = document.getElementById("settings-id-display");
   const text = idDisplay.textContent;
   navigator.clipboard.writeText(text).then(() => {
-    alert("ID copied to clipboard!");
+    alert("ID copied!");
   });
 }
 
@@ -1297,7 +1374,7 @@ function handleFileUpload(e) {
       if (file.type.startsWith("video/")) {
         currentVideoData = data;
         currentVideoFilename = file.name;
-        alert("Video selected: " + file.name + "\nClick Send to upload.");
+        alert("Video: " + file.name + "\nClick Send to upload.");
       } else if (file.type.startsWith("image/")) {
         const msg = {
           user: currentUser,
@@ -1386,47 +1463,7 @@ function watchPresence() {
   }, 30000);
 }
 
-function watchFriends() {
-  // Listeners for unread badges would go here
-}
-
-function handleMentionStart() {
-  const input = document.getElementById("message-input");
-  const text = input.value;
-  const lastAtIndex = text.lastIndexOf("@");
-
-  if (lastAtIndex === -1 || (lastAtIndex > 0 && text[lastAtIndex - 1] !== " ")) {
-    return;
-  }
-
-  db.ref("profiles").once("value", snap => {
-    const users = Object.keys(snap.val() || {});
-    const dropdown = document.getElementById("mention-dropdown");
-    dropdown.innerHTML = "";
-
-    users.forEach(user => {
-      const option = document.createElement("div");
-      option.className = "mention-option";
-      option.textContent = "@" + user;
-      option.addEventListener("click", () => {
-        const before = text.substring(0, lastAtIndex);
-        input.value = before + "@" + user + " ";
-        dropdown.style.display = "none";
-      });
-      dropdown.appendChild(option);
-    });
-
-    if (users.length > 0) {
-      dropdown.style.display = "block";
-    }
-  });
-}
-
-document.getElementById("message-input").addEventListener("blur", () => {
-  setTimeout(() => {
-    document.getElementById("mention-dropdown").style.display = "none";
-  }, 100);
-});
+function watchFriends() {}
 
 // ─────────────────────────────────────────────
 //  Channel Switching
@@ -1450,7 +1487,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Load background color if saved
 const savedBg = lsGet("dl_bg_" + (currentUser || "default"));
 if (savedBg) {
   document.body.style.backgroundColor = savedBg;
