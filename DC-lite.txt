@@ -934,13 +934,40 @@ function asbMuteUser() {
 }
 
 function asbBlockDevice() {
-  const fp = prompt("Device fingerprint to block (fp_xxxxxxxx):\n\nTip: ask the user to share their fingerprint, or find it in the DB under /blocked.");
-  if (!fp) return;
-  const f = fp.trim();
-  if (!confirm("Block device '" + f + "'? All users on this device will be locked out.")) return;
-  db.ref("blocked/" + f).set({ blockedAt: Date.now(), blockedBy: currentUser });
-  alert("Device '" + f + "' has been blocked.");
-  closeAdminPopupMenu();
+  const input = prompt("Enter a USERNAME to block their last known device, or a fingerprint (fp_xxxxxxxx) to block directly:");
+  if (!input) return;
+  const val = input.trim();
+  if (!val) return;
+
+  function doBlock(fp, label) {
+    if (!confirm("Block device '" + fp + "'" + (label ? " (last device of '" + label + "')" : "") + "?\n\nAll accounts on this device will be locked out.")) return;
+    db.ref("blocked/" + fp).set({ blockedAt: Date.now(), blockedBy: currentUser, linkedUser: label || null });
+    alert("Device blocked. Fingerprint: " + fp);
+    closeAdminPopupMenu();
+  }
+
+  if (val.startsWith("fp_")) {
+    // Direct fingerprint
+    doBlock(val, null);
+  } else {
+    // Look up by username via presence
+    db.ref("presence/" + val + "/fp").once("value", snap => {
+      const fp = snap.val();
+      if (!fp) {
+        // Fallback: check profiles
+        db.ref("profiles/" + val + "/fp").once("value", snap2 => {
+          const fp2 = snap2.val();
+          if (!fp2) {
+            alert("No device fingerprint found for user '" + val + "'.\n\nThey may not have logged in since device tracking was added, or the username is wrong.");
+          } else {
+            doBlock(fp2, val);
+          }
+        });
+      } else {
+        doBlock(fp, val);
+      }
+    });
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -1355,8 +1382,42 @@ document.getElementById("add-friend-button").addEventListener("click", () => {
 //  Presence
 // ─────────────────────────────────────────────
 function watchPresence() {
-  db.ref("presence/" + currentUser).set({ lastSeen: Date.now() });
-  setInterval(() => { db.ref("presence/" + currentUser).set({ lastSeen: Date.now() }); }, 30000);
+  const fp = getDeviceFingerprint();
+  db.ref("presence/" + currentUser).set({ lastSeen: Date.now(), fp: fp });
+  setInterval(() => {
+    db.ref("presence/" + currentUser).update({ lastSeen: Date.now(), fp: fp });
+  }, 30000);
+
+  // Watch for admin mute applied in real-time
+  db.ref("muted/" + currentUser).on("value", snap => {
+    const muteData = snap.val();
+    if (!muteData) {
+      if (!isMuted) {
+        document.getElementById("message-input").disabled = false;
+        document.getElementById("send-button").disabled = false;
+        document.getElementById("upload-button").disabled = false;
+        hideRateLimitWarning();
+      }
+      return;
+    }
+    // Expired mute — clean it up
+    if (muteData.expiresAt && Date.now() > muteData.expiresAt) {
+      db.ref("muted/" + currentUser).remove();
+      return;
+    }
+    // Active mute
+    document.getElementById("message-input").disabled = true;
+    document.getElementById("send-button").disabled = true;
+    document.getElementById("upload-button").disabled = true;
+    const remaining = muteData.expiresAt
+      ? " (" + Math.ceil((muteData.expiresAt - Date.now()) / 60000) + " min remaining)"
+      : " (permanent)";
+    showRateLimitWarning("🚫 You have been muted by an admin" + remaining);
+    if (muteData.expiresAt) {
+      const delay = muteData.expiresAt - Date.now();
+      if (delay > 0) setTimeout(() => { db.ref("muted/" + currentUser).remove(); }, delay);
+    }
+  });
 }
 function watchFriends() {}
 
