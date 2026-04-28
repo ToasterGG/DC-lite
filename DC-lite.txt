@@ -1047,7 +1047,12 @@ function asbFirebaseStats() {
 //  UI Events
 // ─────────────────────────────────────────────
 document.getElementById("login-button").addEventListener("click", login);
-document.getElementById("settings-icon").addEventListener("click", openSettings);
+document.getElementById("settings-icon").addEventListener("click", handleSettingsIconClick);
+
+function handleSettingsIconClick(e) {
+  e.stopPropagation();
+  openSettings();
+}
 document.getElementById("settings-close").addEventListener("click", closeSettings);
 document.getElementById("settings-save").addEventListener("click", saveSettings);
 document.getElementById("settings-id-copy").addEventListener("click", copyIdToClipboard);
@@ -1118,7 +1123,7 @@ function login() {
         if (username === ADMIN_USER && password === ADMIN_PASS) {
           isAdmin = true;
           document.getElementById("settings-icon").textContent = "⚙⚡";
-          document.getElementById("settings-icon").removeEventListener("click", openSettings);
+          document.getElementById("settings-icon").removeEventListener("click", handleSettingsIconClick);
           document.getElementById("settings-icon").addEventListener("click", (e) => {
             e.stopPropagation();
             toggleAdminPopupMenu();
